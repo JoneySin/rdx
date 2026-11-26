@@ -31,7 +31,7 @@ async def root_route_handler(request):
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fast Finder — Movies, Series & More</title>
+<title>RdxTv — Movies, Series & More</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#000;--text:#fff;--box:rgba(0,0,0,.7);--tag-bg:rgba(51,51,51,.8);--red:#E50914;--red-hover:#b30710}
@@ -66,7 +66,7 @@ __BRAND_CSS__
 <body>
 <div class="hero-bg"></div>
 <header class="navbar">
-    <a href="/" class="logo landing-brand" aria-label="FastFinder home">__BRAND_MARKUP__</a>
+    <a href="/" class="logo landing-brand" aria-label="RdxTv home">__BRAND_MARKUP__</a>
     <div class="header-actions">
         <button class="theme-btn" id="theme-btn">Theme</button>
         <a href="/login" class="admin-btn">Sign In</a>

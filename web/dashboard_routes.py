@@ -1077,7 +1077,7 @@ async def dash(req):
     if not await require_active_plan(role, tg_id):
         return web.HTTPFound('/premium_expired')
 
-    return build_page("Home - Fast Finder", DASHBOARD_BODY, "", "dash", role)
+    return build_page("Home - RdxTv", DASHBOARD_BODY, "", "dash", role)
 
 
 @dashboard_routes.get('/logout')
@@ -1102,7 +1102,7 @@ async def premium_expired(req):
     content = (
         '<div style="text-align:center;">'
         '<div style="font-size:50px;margin-bottom:15px;">&#9203;</div>'
-        '<p style="color:var(--muted);margin-bottom:30px;">Your access to Fast Finder Web has expired. '
+        '<p style="color:var(--muted);margin-bottom:30px;">Your access to RdxTv Web has expired. '
         'Please renew your plan via our Telegram Bot.</p>'
         '<div class="scard red" style="text-align:left;margin-bottom:25px;padding:15px;">'
         '<div class="scard-label">How to Renew?</div>'

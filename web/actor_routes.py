@@ -196,7 +196,7 @@ async def actors_directory_page(req):
     '''
 
     page_body = f'''<div class="main" style="padding-top:20px; max-width:1100px; margin:0 auto; padding-left:20px; padding-right:20px;">{search_ui}{initial_grid}{js_logic}</div>'''
-    return build_page("Directory Catalog - Fast Finder", page_body, "", "actors", role)
+    return build_page("Directory Catalog - RdxTv", page_body, "", "actors", role)
 
 # ─────────────────────────────────────────────────────────
 # 🔍 API: DIRECTORY UNIVERSAL SEARCH (WITH PAGINATION)

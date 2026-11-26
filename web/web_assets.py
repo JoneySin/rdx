@@ -644,11 +644,11 @@ _NAV_SHELL = ('<div class="sidebar-overlay" id="sbOverlay" onclick="closeSidebar
     '<div class="sb-footer"><a href="/logout" class="sb-logout"><span aria-hidden="true">🚪</span> Sign Out</a></div></div>'
     '<div class="topbar"><button class="ham-btn" id="hamBtn" onclick="openSidebar()">'
     '<span class="ham-line"></span><span class="ham-line"></span><span class="ham-line"></span></button>'
-    '<a class="logo" href="/dashboard" aria-label="FastFinder home">' + BRAND_MARKUP + '</a>'
+    '<a class="logo" href="/dashboard" aria-label="RdxTv home">' + BRAND_MARKUP + '</a>'
     '<div class="topbar-right"><button class="theme-btn" onclick="toggleThemeFixed()"><span aria-hidden="true">🌗</span> Theme</button></div></div>')
 
 _NAV_GUEST = ('<div class="topbar" style="position:absolute; width:100%; box-shadow:none; background:transparent;">'
-    '<a class="logo guest-brand" href="/" aria-label="FastFinder home">' + BRAND_MARKUP + '</a>'
+    '<a class="logo guest-brand" href="/" aria-label="RdxTv home">' + BRAND_MARKUP + '</a>'
     '<div class="topbar-right"><button class="theme-btn" onclick="toggleThemeFixed()"><span aria-hidden="true">🌗</span> Theme</button></div></div>')
 
 

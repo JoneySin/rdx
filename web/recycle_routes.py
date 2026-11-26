@@ -323,7 +323,7 @@ async def recycle_page(req):
     role, _ = await get_auth(req)
     if role != 'admin':
         return web.HTTPFound('/dashboard')
-    return build_page('Recycle Bin - Fast Finder', _page_body(), '', 'recycle', role)
+    return build_page('Recycle Bin - RdxTv', _page_body(), '', 'recycle', role)
 
 
 @recycle_routes.get('/api/recycle/list')

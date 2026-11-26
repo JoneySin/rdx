@@ -6,7 +6,7 @@ from web.brand import BRAND_MARKUP, BRAND_CSS
 logger = logging.getLogger(__name__)
 
 # ─────────────────────────────────────────────
-# 🎬 FAST FINDER OPTIMIZED STREAM TEMPLATE
+# 🎬 RDXTV OPTIMIZED STREAM TEMPLATE
 # ─────────────────────────────────────────────
 watch_tmplt = """<!DOCTYPE html>
 <html lang="en">
@@ -63,7 +63,7 @@ __BRAND_CSS__
 </head>
 <body>
 <div class="navbar">
-    <a href="/" class="logo watch-brand" aria-label="FastFinder home">__BRAND_MARKUP__</a>
+    <a href="/" class="logo watch-brand" aria-label="RdxTv home">__BRAND_MARKUP__</a>
     <button class="theme-btn" id="theme-btn">Theme</button>
 </div>
 <div class="hero-container">
@@ -146,7 +146,7 @@ async def media_watch(message_id, query=""):
         mime = info.mime_type or 'video/mp4'   # None => crash fix
 
         if mime.split('/')[0].strip() == 'video':
-            fn = html.escape(info.file_name or "Fast Finder Movie")   # None => crash fix
+            fn = html.escape(info.file_name or "RdxTv Movie")   # None => crash fix
             return (watch_tmplt.format(heading=f"Watch {fn}", file_name=fn, src=src, mime_type=html.escape(mime))
                     .replace("__BRAND_CSS__", BRAND_CSS).replace("__BRAND_MARKUP__", BRAND_MARKUP))
         

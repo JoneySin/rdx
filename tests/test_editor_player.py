@@ -683,13 +683,13 @@ class EditorPlayerTests(unittest.IsolatedAsyncioTestCase):
         with patch.object(render_template, 'get_media_info', AsyncMock(return_value=info)):
             watch = await render_template.media_watch(123)
         self.assertIn('brand-mark', watch)
-        self.assertIn('<span class="brand-mark" aria-hidden="true">F</span><span class="brand-word">FAST FINDER</span>', watch)
+        self.assertIn('<span class="brand-mark" aria-hidden="true">R</span><span class="brand-word">RDXTV</span>', watch)
         self.assertNotIn('__BRAND_', watch)
         self.assertIn('Video.mp4', watch)
         with patch.object(stream, 'get_auth', AsyncMock(return_value=(None, None))):
             response = await self.client.get('/')
             landing = await response.text()
-        self.assertIn('<span class="brand-mark" aria-hidden="true">F</span><span class="brand-word">FAST FINDER</span>', landing)
+        self.assertIn('<span class="brand-mark" aria-hidden="true">R</span><span class="brand-word">RDXTV</span>', landing)
         self.assertNotIn('__BRAND_', landing)
 
     def test_navigation_icons_keep_admin_permissions_and_labels(self):
@@ -699,7 +699,7 @@ class EditorPlayerTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn(icon, admin)
         self.assertNotIn('href="/stats"', user)
         self.assertIn('href="/dashboard" class="sb-link active"', user)
-        self.assertIn('aria-label="FastFinder home"', admin)
+        self.assertIn('aria-label="RdxTv home"', admin)
 
     def test_shared_page_title_is_escaped_and_player_only_for_authenticated_users(self):
         admin = build_page('<script>bad</script>', '', role='admin').text

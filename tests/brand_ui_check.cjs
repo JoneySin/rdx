@@ -10,9 +10,9 @@ const assert=require('node:assert/strict');
  await page.addInitScript(()=>{window.Telegram={WebApp:{expand(){},ready(){},initData:'fixture'}};window.Plyr=class {on(){}};});
  await page.goto(base+'/dashboard');await page.locator('.grp-card').first().waitFor();
  const logo=page.locator('.topbar .logo');
- assert.equal(await logo.getAttribute('aria-label'),'FastFinder home');
- assert.equal(await logo.locator('.brand-word').innerText(),'FAST FINDER');
- assert.equal(await logo.locator('.brand-mark').innerText(),'F');
+ assert.equal(await logo.getAttribute('aria-label'),'RdxTv home');
+ assert.equal(await logo.locator('.brand-word').innerText(),'RDXTV');
+ assert.equal(await logo.locator('.brand-mark').innerText(),'R');
  assert.equal(await logo.locator('.brand-mark svg').count(),0);
  const mark=await logo.locator('.brand-mark').innerHTML();
  for(const width of [320,768,1200]){
@@ -37,7 +37,7 @@ const assert=require('node:assert/strict');
  }
  assert.ok((await page.locator('.sb-link[href="/dashboard"]').getAttribute('class')).includes('active'));
  assert.ok((await page.locator('.sb-logout').innerText()).includes('🚪'));
- assert.equal(await page.locator('.sb-logo .brand-word').innerText(),'FAST FINDER');
+ assert.equal(await page.locator('.sb-logo .brand-word').innerText(),'RDXTV');
  assert.equal(await page.locator('.sb-logo .brand-word').evaluate(el=>getComputedStyle(el).fontSize),'14px');
  assert.equal(await page.locator('.sb-logo .brand-mark').evaluate(el=>getComputedStyle(el).fontSize),'18px');
  await page.locator('#sbOverlay').click({position:{x:300,y:400}});
@@ -45,11 +45,11 @@ const assert=require('node:assert/strict');
  await page.locator('.theme-btn').click();
  const light=await logo.locator('.brand-word').evaluate(el=>getComputedStyle(el).color);assert.equal(dark,light); // Original red wordmark in both themes.
  assert.equal(await logo.locator('.brand-mark').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(229, 9, 20)');
- await page.screenshot({path:'/tmp/fastfinder-brand.png'});
- await page.goto(base+'/posts');assert.equal(await page.locator('.topbar .brand-word').innerText(),'FAST FINDER');
+ await page.screenshot({path:'/tmp/rdxtv-brand.png'});
+ await page.goto(base+'/posts');assert.equal(await page.locator('.topbar .brand-word').innerText(),'RDXTV');
  await page.locator('#hamBtn').click();assert.ok((await page.locator('.sb-link[href="/posts"]').getAttribute('class')).includes('active'));
  await page.goto(base+'/fixture/user-dashboard');await page.locator('#hamBtn').click();assert.equal(await page.locator('.sb-link[href="/stats"]').count(),0);
- await page.goto(base+'/miniapp');assert.equal(await page.locator('.tb .brand-word').innerText(),'FAST FINDER');
+ await page.goto(base+'/miniapp');assert.equal(await page.locator('.tb .brand-word').innerText(),'RDXTV');
  assert.equal(await page.locator('.tb .brand-mark').innerHTML(),mark);
  assert.equal(await page.locator('.tb .brand-word').evaluate(el=>getComputedStyle(el).fontSize),'17px');
  assert.equal(await page.locator('.tb .brand-mark').evaluate(el=>getComputedStyle(el).fontSize),'16px');
@@ -59,7 +59,7 @@ const assert=require('node:assert/strict');
  assert.equal(await page.locator('.guest-brand .brand-mark').evaluate(el=>getComputedStyle(el).fontSize),'24px');
  const guestWord=await page.locator('.guest-brand .brand-word').boundingBox(),guestTheme=await page.locator('.topbar .theme-btn').boundingBox();
  assert.ok(guestWord.x+guestWord.width<guestTheme.x,'guest header overlaps at 320px');
- await page.goto(base+'/fixture/landing');assert.equal(await page.locator('.navbar .brand-word').innerText(),'FAST FINDER');
+ await page.goto(base+'/fixture/landing');assert.equal(await page.locator('.navbar .brand-word').innerText(),'RDXTV');
  assert.equal(await page.locator('.navbar .brand-mark').innerHTML(),mark);
  for(const [width,wordSize,badgeSize] of [[320,'20px','18px'],[1200,'28px','24px']]){
    await page.setViewportSize({width,height:800});
@@ -79,5 +79,5 @@ const assert=require('node:assert/strict');
    assert.ok(word.x+word.width<=theme.x,`watch header overlap at ${width}`);
  }
 
- assert.deepEqual(errors,[]);await browser.close();console.log('FastFinder brand and emoji navigation: roles, themes and mobile/desktop OK');
+ assert.deepEqual(errors,[]);await browser.close();console.log('RdxTv brand and emoji navigation: roles, themes and mobile/desktop OK');
 })().catch(e=>{console.error(e);process.exit(1)});

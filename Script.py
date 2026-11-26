@@ -16,7 +16,7 @@ class script(object):
 <blockquote><b><i>✨ Join Premium For Ads Free Experience</i></b></blockquote>"""
 
     # 📊 ✅ NEW PREMIUM UI: एकदम नया मॉडर्न लुक जिसमें Directory भी शामिल है (Admin Only)
-    STATUS_TXT = """<b>🤖 Fast Finder System Telemetry</b>
+    STATUS_TXT = """<b>🤖 RdxTv System Telemetry</b>
 
 <b>👥 <u>Network Dynamics:</u></b>
 <blockquote><b>🤵 Users:</b> <code>{}</code>
@@ -44,7 +44,7 @@ class script(object):
 <b>⏱️ Uptime:</b> <code>{}</code></blockquote>"""
 
     # ✅ सिर्फ प्रीमियम/नॉर्मल यूज़र्स के लिए ग्लोबल लाइब्रेरी स्टैट्स
-    USER_STATUS_TXT = """<b>📊 Fast Finder Global Library</b>
+    USER_STATUS_TXT = """<b>📊 RdxTv Global Library</b>
 
 <b>🗄️ <u>Content Vault:</u></b>
 <blockquote><b>🚀 Total Titles:</b> <code>{}</code>
@@ -115,7 +115,7 @@ Choose a category below. 👇</b>"""
         if (Path(__file__).parent / "plugins" / "repair_library_TEMP.py").is_file() else "",
     )
 
-    PLAN_TXT = """💎 <b>Fast Finder Premium Plans</b> 💎
+    PLAN_TXT = """💎 <b>RdxTv Premium Plans</b> 💎
 
 Activate a premium plan to unlock exclusive, high-speed features!
 

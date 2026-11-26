@@ -1,8 +1,8 @@
-"""The original Fast Finder identity, shared by every web surface."""
+"""The RdxTv identity, shared by every web surface."""
 
-BRAND_MARKUP = '''<span class="brand-mark" aria-hidden="true">F</span><span class="brand-word">FAST FINDER</span>'''
+BRAND_MARKUP = '''<span class="brand-mark" aria-hidden="true">R</span><span class="brand-word">RDXTV</span>'''
 
-# The original red F badge and uppercase wordmark, kept in one place so the
+# The red R badge and uppercase wordmark, kept in one place so the
 # dashboard, sidebar, landing, watch page and mini app cannot drift apart.
 BRAND_CSS = """
 .brand-mark{display:inline-block;flex:0 0 auto;background:var(--accent,var(--ac,var(--red,#e50914)));color:#fff;padding:2px 7px;border-radius:3px;font-size:18px;font-weight:900;line-height:1}

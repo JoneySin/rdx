@@ -257,4 +257,4 @@ async def stats(req):
   </section>
   <p class="stats-footnote">File and thumbnail counts may be cached for up to a minute. Group counts are read from saved records; legacy records are included.</p>
 </main>{_STATS_JS}'''
-    return build_page("Stats - Fast Finder", body, "", "stats", role)
+    return build_page("Stats - RdxTv", body, "", "stats", role)

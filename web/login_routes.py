@@ -138,7 +138,7 @@ async def api_forgot_password(req):
         return web.HTTPFound('/forgot_password?err=Too many OTP requests. Please try again after 10 minutes.')
     if otp:
         try:
-            await temp.BOT.send_message(tg_id, f"🔐 **Fast Finder Password Reset**\n\nYour Password Reset OTP is: `{otp}`\n\nValid for 10 minutes. Do not share!")
+            await temp.BOT.send_message(tg_id, f"🔐 **RdxTv Password Reset**\n\nYour Password Reset OTP is: `{otp}`\n\nValid for 10 minutes. Do not share!")
             return web.HTTPFound('/forgot_password?msg=OTP sent to your Telegram!')
         except: return web.HTTPFound('/forgot_password?err=Error sending OTP. Have you started the bot?')
     return web.HTTPFound('/forgot_password?err=Telegram ID not registered!')
