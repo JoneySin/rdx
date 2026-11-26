@@ -30,11 +30,12 @@
 
 import asyncio
 import time
-from pymongo import AsyncMongoClient
 from pymongo.errors import BulkWriteError
 from pyrogram import Client, ContinuePropagation, filters
 from keyboards import ui_button, ui_keyboard
 from info import ADMINS, DATABASE_URL, DATABASE_NAME
+from database.mongo import (MongoConfigError, connect_error_hint, create_client,
+                            database_name, normalize_uri)
 
 BATCH_SIZE = 500
 STATUS_EDIT_INTERVAL = 4  # seconds between progress message edits
@@ -69,23 +70,29 @@ async def check_db_cmd(bot, message):
     # /check_db [MONGO_URL] [DB_NAME] — no URL given -> use info.py default
     if len(message.command) > 1:
         check_url = message.command[1]
-        check_db_name = message.command[2] if len(message.command) > 2 else DATABASE_NAME
+        check_db_name = message.command[2] if len(message.command) > 2 else ""
     else:
         check_url = DATABASE_URL
         check_db_name = DATABASE_NAME
+
+    try:
+        check_url = normalize_uri(check_url)
+    except MongoConfigError as e:
+        return await message.reply(f"⚠️ {e}")
+    check_db_name = database_name(check_url, check_db_name)
 
     SOURCE[message.from_user.id] = {"url": check_url, "db_name": check_db_name}
     status = await message.reply("🔎 Checking DB info...")
 
     old_client = None
     try:
-        old_client = AsyncMongoClient(check_url)
+        old_client = create_client(check_url, purpose="check_db")
         old_db = old_client[check_db_name]
         await old_client.admin.command("ping")
     except Exception as e:
         if old_client is not None:
             await old_client.close()
-        return await status.edit(f"❌ Could not connect (Auth/Network Error):\n{e}")
+        return await status.edit(f"❌ Could not connect (Auth/Network Error):\n{connect_error_hint(e)}")
 
     try:
         collections = await old_db.list_collection_names()
@@ -134,11 +141,11 @@ async def dbop_callback(bot, cq):
         src = SOURCE.get(cq.from_user.id, {"url": DATABASE_URL, "db_name": DATABASE_NAME})
         old_client = None
         try:
-            old_client = AsyncMongoClient(src["url"])
+            old_client = create_client(src["url"], purpose="check_db")
             old_db = old_client[src["db_name"]]
             collections = await old_db.list_collection_names()
         except Exception as e:
-            return await cq.message.edit(f"❌ Could not load collections:\n{e}")
+            return await cq.message.edit(f"❌ Could not load collections:\n{connect_error_hint(e)}")
         finally:
             if old_client is not None:
                 await old_client.close()
@@ -157,9 +164,12 @@ async def dbop_callback(bot, cq):
     label = "Full DB Copy" if action == "copy_db" else "Migrate"
     await cq.message.edit(
         f"✏️ Send the new MongoDB URI for {label} (reply in this chat):\n\n"
-        f"mongodb+srv://user:pass@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority\n\n"
-        f"Optionally add a DB_NAME after it, separated by a space:\n"
-        f"mongodb+srv://... mydbname\n\n"
+        f"<code>mongodb+srv://user:pass@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority</code>\n\n"
+        f"Atlas → Connect → Drivers → Python → PyMongo (Asynchronous) वाला पूरा "
+        f"string paste करो (space/newline हो तो भी चल जाएगा)।\n\n"
+        f"DB का नाम अलग से देना हो तो URI के बाद space लगाकर लिखो: "
+        f"<code>mongodb+srv://... mydbname</code>\n"
+        f"(न दो तो URI का नाम, वरना {DATABASE_NAME} इस्तेमाल होगा)\n\n"
         f"Send /cancel to abort."
     )
     await cq.answer()
@@ -173,9 +183,10 @@ async def collection_selected(bot, cq):
 
     await cq.message.edit(
         f"✏️ Send the new MongoDB URI to copy collection '{col_name}':\n\n"
-        f"mongodb+srv://user:pass@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority\n\n"
-        f"Optionally add a DB_NAME after it, separated by a space:\n"
-        f"mongodb+srv://... mydbname\n\n"
+        f"<code>mongodb+srv://user:pass@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority</code>\n\n"
+        f"Atlas वाला पूरा string paste करो (space/newline से कोई फ़र्क़ नहीं पड़ता)।\n"
+        f"DB नाम अलग से चाहिए तो URI के बाद space लगाकर लिखो: "
+        f"<code>mongodb+srv://... mydbname</code>\n\n"
         f"Send /cancel to abort."
     )
     await cq.answer()
@@ -252,12 +263,28 @@ async def receive_new_url(bot, message):
         # plugins handle it (use /cancel to leave this flow).
         raise ContinuePropagation
 
-    parts = message.text.strip().split()
-    if not parts or not parts[0].startswith("mongodb"):
-        return await message.reply("⚠️ That doesn't look like a valid MongoDB URI. Send again, or /cancel.")
+    # URI के बाद DB name चाहिए, और URI के अंदर भी space/newline आ सकता है —
+    # इसलिए scheme से शुरू होने वाले token से आगे तक सब URI मानो, और आखिरी
+    # standalone token को DB name।
+    tokens = message.text.split()
+    scheme = ("mongodb://", "mongodb+srv://")
+    if not any(tok.lower().startswith(scheme) for tok in tokens):
+        return await message.reply(
+            "⚠️ That doesn't look like a valid MongoDB URI (mongodb:// or mongodb+srv://).\n"
+            "Send again, or /cancel."
+        )
+    start = next(i for i, tok in enumerate(tokens) if tok.lower().startswith(scheme))
+    tokens = tokens[start:]
+    db_name_hint = ""
+    if len(tokens) > 1 and not tokens[1].lower().startswith(scheme):
+        db_name_hint = tokens[-1]
+        tokens = tokens[:-1]
 
-    new_url = parts[0]
-    db_name = parts[1] if len(parts) > 1 else DATABASE_NAME
+    try:
+        new_url = normalize_uri("".join(tokens))
+    except MongoConfigError as e:
+        return await message.reply(f"⚠️ {e}\n\nSend the URI again, or /cancel.")
+    db_name = database_name(new_url, db_name_hint)
     action = pending["action"]
     target_collection = pending.get("collection")
     PENDING.pop(message.from_user.id, None)
@@ -273,8 +300,8 @@ async def receive_new_url(bot, message):
     old_client = new_client = None
     try:
         try:
-            old_client = AsyncMongoClient(src["url"])
-            new_client = AsyncMongoClient(new_url)
+            old_client = create_client(src["url"], purpose="migrate_source")
+            new_client = create_client(new_url, purpose="migrate_target")
             old_db = old_client[src["db_name"]]
             new_db = new_client[db_name]
             await new_client.admin.command("ping")

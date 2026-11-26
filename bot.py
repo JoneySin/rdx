@@ -52,7 +52,8 @@ from info import (
 )
 from utils import temp
 from database.users_chats_db import db
-from database.ia_filterdb import ensure_indexes
+from database.ia_filterdb import ensure_indexes, client as mongo_client
+from database.mongo import connect_error_hint
 from plugins.premium import check_premium_expired
 from plugins.commands import load_send_all_setting
 
@@ -224,8 +225,20 @@ class Bot(Client):
         await self._start_telegram()
 
         # 2. Database Indexes Sync (Makkhan DB Tuning)
-        await ensure_indexes()
-        await db._ensure_indexes() 
+        # यही पहला असली MongoDB round-trip है (Atlas का mongodb+srv:// URI यहीं
+        # resolve होता है), इसलिए DB_STATE यहीं से set होता है — /health का
+        # `database` field और ?db=1 वाला deep check इसी पर निर्भर हैं।
+        try:
+            await ensure_indexes()
+            await db._ensure_indexes()
+            temp.DB_STATE = "connected"
+            logger.info("✅ MongoDB connected (%s)", type(mongo_client).__name__)
+        except Exception as e:
+            # Cluster paused / URI गलत / IP whitelist missing: bot चलता रहे
+            # (web + /health up), बस असली वजह एक साफ़ line में log हो।
+            temp.DB_STATE = "error"
+            logger.error("❌ Database index sync failed: %s", connect_error_hint(e))
+            logger.error("   Web stays healthy on /health; fix DATABASE_URL and redeploy.")
         try:
             await load_send_all_setting()
         except Exception as e:

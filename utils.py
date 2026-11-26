@@ -30,6 +30,9 @@ class temp(object):
     # Web thumbnails/streaming depend on the Kurigram client. Keep this flag
     # False until Telegram auth has actually completed.
     BOT_READY = False
+    # "unknown" -> "connected"/"error"; bot.py set करता है ताकि /health असली
+    # MongoDB (mongodb+srv://) state बता सके।
+    DB_STATE = "unknown"
     CANCEL = False
     SEND_ALL_ENABLED = True
     FILES, PM_FILES = {}, {}

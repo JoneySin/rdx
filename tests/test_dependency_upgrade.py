@@ -133,7 +133,9 @@ class DriverUpgradeTests(unittest.IsolatedAsyncioTestCase):
                 return self.database
         old, new = FakeClient(old_db), FakeClient(new_db)
         check_db_TEMP.PENDING[56] = {'action': 'copy_db'}
-        with patch.object(check_db_TEMP, 'AsyncMongoClient', side_effect=[old, new]):
+        # check_db_TEMP now builds clients through database.mongo.create_client
+        # (shared srv/pool settings), so fake the factory, not the driver.
+        with patch.object(check_db_TEMP, 'create_client', side_effect=[old, new]):
             await check_db_TEMP.receive_new_url(None, message)
         old.close.assert_awaited_once()
         new.close.assert_awaited_once()

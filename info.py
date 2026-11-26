@@ -118,12 +118,37 @@ DELETE_CHANNEL = int(environ.get("DELETE_CHANNEL", LOG_CHANNEL))
 # ─────────────────────────────────────────────
 # 🗄️ DATABASE CONNECTION URL
 # ─────────────────────────────────────────────
-DATABASE_URL = environ.get("DATABASE_URL", "")
-DATABASE_NAME = environ.get("DATABASE_NAME", "Cluster0")
+# Atlas -> Connect -> Drivers -> Python -> "PyMongo (Asynchronous)" जो URI देता
+# है उसे हूबहू paste करो:
+# mongodb+srv://user:pass@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority
+# (URL में space/newline आ जाए तो database/mongo.py खुद हटा देता है)
+DATABASE_URL = (environ.get("DATABASE_URL", "") or "").strip()
+# Atlas URI में database का नाम अक्सर खाली होता है, इसलिए default "Cluster0".
+# अलग नाम चाहिए तो DATABASE_NAME set करो (या URI के आखिर में /RdxTv लगाओ)।
+DATABASE_NAME = (environ.get("DATABASE_NAME", "") or "").strip() or "Cluster0"
 
 if not DATABASE_URL:
     logger.error("❌ DATABASE_URL missing")
     exit(1)
+
+if not DATABASE_URL.lower().startswith(("mongodb://", "mongodb+srv://")):
+    logger.error(
+        "❌ DATABASE_URL must start with mongodb:// or mongodb+srv:// "
+        "(copy it from Atlas -> Connect -> Drivers -> PyMongo)"
+    )
+    exit(1)
+
+if DATABASE_URL.lower().startswith("mongodb+srv://"):
+    # SRV lookup PyMongo खुद करता है, उसके लिए dnspython चाहिए (requirements.txt
+    # में pinned है)। Missing हो तो शुरू में ही साफ़ message दो।
+    try:
+        import dns.resolver  # noqa: F401
+    except Exception:  # pragma: no cover - only on a broken install
+        logger.error(
+            "❌ mongodb+srv:// needs the 'dnspython' package. "
+            "Run: pip install dnspython==2.9.2 (already listed in requirements.txt)"
+        )
+        exit(1)
 
 # ─────────────────────────────────────────────
 # ⚙️ GLOBAL SETTINGS & ADAPTIVE RESULTS SYNC

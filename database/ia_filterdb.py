@@ -9,11 +9,11 @@ import weakref
 from difflib import SequenceMatcher
 from struct import pack
 from bson.objectid import ObjectId
-from pymongo import AsyncMongoClient
 from pymongo.errors import DuplicateKeyError
 from pyrogram.file_id import FileId
 from pyrogram.errors import FloodWait
 from info import DATABASE_URL, DATABASE_NAME, USE_CAPTION_FILTER, DELETE_CHANNEL
+from database.mongo import create_client, database_name
 from utils import temp
 from media_probe import should_probe_media
 
@@ -22,19 +22,11 @@ logger = logging.getLogger(__name__)
 # ─────────────────────────────────────────────────────────
 # ⚙️ PYMONGO ASYNC CONNECTION — Memory-Leak & RAM Guard Optimized
 # ─────────────────────────────────────────────────────────
-client = AsyncMongoClient(
-    DATABASE_URL,
-    maxPoolSize=15,
-    minPoolSize=2,              # keep a couple of warm TLS connections for first-click latency
-    maxIdleTimeMS=300000,       # idle sockets stay warm for 5 min instead of reconnecting every 30 s
-    waitQueueTimeoutMS=10000,   # fail fast instead of hanging forever when the pool is saturated
-    serverSelectionTimeoutMS=5000,
-    connectTimeoutMS=10000,
-    socketTimeoutMS=20000,
-    retryWrites=True,
-    retryReads=True,
-)
-db = client[DATABASE_NAME]
+# Atlas का mongodb+srv:// URL, pool/TLS settings और DB-name fallback — सब
+# database/mongo.py में एक ही जगह तय होते हैं (bot, web और plugins तीनों वही
+# client settings इस्तेमाल करते हैं)।
+client = create_client(DATABASE_URL, purpose="library")
+db = client[database_name(DATABASE_URL, DATABASE_NAME)]
 
 primary = db["Primary"]
 cloud   = db["Cloud"]

@@ -8,10 +8,10 @@ import weakref
 from datetime import datetime, timedelta, timezone
 from pymongo import ReturnDocument
 from zoneinfo import ZoneInfo
-from pymongo import AsyncMongoClient
 from pymongo.errors import DuplicateKeyError
 from info import (DATABASE_URL, DATABASE_NAME, FILE_CAPTION, 
                   SPELL_CHECK, PROTECT_CONTENT, AUTO_DELETE, TIME_ZONE)
+from database.mongo import create_client, database_name
 
 logger = logging.getLogger(__name__)
 
@@ -229,16 +229,10 @@ class WebAuthDB:
 # =========================================
 class Database:
     def __init__(self):
-        # ✅ PYMONGO ASYNC ENGINE: कोएब आइडल थ्रॉटलिंग और कनेक्शन DROP से सुरक्षित ट्यूनिंग
-        self.client = AsyncMongoClient(
-            DATABASE_URL, 
-            minPoolSize=2,            # 2 warm connections: first click/query doesn't pay TLS setup
-            maxPoolSize=15,           # हैवी ट्रैफिक के लिए 15 कनेक्शंस पूल
-            maxIdleTimeMS=300000,     # 5 मिनट तक idle sockets warm रहें (पहले 30s)
-            waitQueueTimeoutMS=10000, # pool saturated हो तो 10s में fail, forever hang नहीं
-            serverSelectionTimeoutMS=5000
-        )
-        self.db = self.client[DATABASE_NAME]
+        # ✅ PYMONGO ASYNC ENGINE: वही client settings जो database/mongo.py तय करता है
+        # (mongodb+srv:// = Atlas default, dnspython-backed SRV lookup included)
+        self.client = create_client(DATABASE_URL, purpose="bot")
+        self.db = self.client[database_name(DATABASE_URL, DATABASE_NAME)]
         
         # Collections
         self.users, self.groups, self.premium = self.db.Users, self.db.Groups, self.db.Premiums

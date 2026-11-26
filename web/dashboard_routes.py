@@ -1,3 +1,4 @@
+import asyncio
 import time
 from aiohttp import web
 from web.web_assets import build_page, get_auth, form_wrapper, require_active_plan, DEFAULT_MEDIA_MODE, DIRECTORY_FILTER_CSS
@@ -1124,9 +1125,24 @@ async def premium_expired(req):
 # यहाँ merge कर दिया गया है।
 @dashboard_routes.get('/health')
 async def koyeb_health_check(req):
-    return web.json_response({
+    payload = {
         "status": "alive",
         "platform": "koyeb",
         "telegram_ready": bool(getattr(temp, "BOT_READY", False)),
+        "database": getattr(temp, "DB_STATE", "unknown"),
         "uptime_seconds": round(time.time() - temp.START_TIME, 2),
-    })
+    }
+    # /health shallow ही रहे ताकि paused/slow Atlas cluster की वजह से Koyeb कोई
+    # healthy instance न मारे। असली MongoDB check के लिए ?db=1 लगाओ — fail होने
+    # पर 503 + Atlas-specific hint मिलेगा।
+    if req.query.get("db") in ("1", "true", "yes"):
+        from database.ia_filterdb import client as mongo_client
+        from database.mongo import connect_error_hint, ping
+        try:
+            await asyncio.wait_for(ping(mongo_client), timeout=5)
+            payload["database"] = "connected"
+        except Exception as exc:  # noqa: BLE001 - health check reports anything
+            payload.update(status="degraded", database="error",
+                           database_error=connect_error_hint(exc))
+            return web.json_response(payload, status=503)
+    return web.json_response(payload)
