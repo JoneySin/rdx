@@ -1,0 +1,550 @@
+import io, time, html, re
+from urllib.parse import urlencode, urlsplit
+import asyncio
+import aiohttp
+from aiohttp import web
+from bson.objectid import ObjectId
+from utils import temp
+from info import THUMBNAIL_STORAGE_CHANNEL
+# ✅ DRY: Posts collection handle अब ia_filterdb से आता है — पहले यहाँ अलग से
+# `motor_db.db["Posts"]` बनाया जाता था, जबकि ia_filterdb.py में वही collection
+# पहले से मौजूद था (और उस पर text index भी बनता है)। दो handle एक ही collection
+# पर रखने का कोई फायदा नहीं था।
+from database.ia_filterdb import posts as posts_col
+# ✅ DRY: fast_json + DIRECTORY_CSS अब web_assets से आते हैं (पहले दोनों यहाँ copy थे)
+from web.web_assets import build_page, get_auth, require_active_plan, fast_json, DIRECTORY_CSS, DEFAULT_CATALOG_MODE
+from web.post_editor import build_post_editor, post_image_src
+from web.catalog_cards import render_catalog_card
+from web.catalog_search import CATALOG_PAGE_SIZE, catalog_page
+
+post_routes = web.RouteTableDef()
+
+# ─────────────────────────────────────────────────────────
+# 🛠️ ImgBB Auto-Converter Helper Functions
+# ─────────────────────────────────────────────────────────
+async def fetch_direct_ibb_url(session, url):
+    url = url.strip()
+    if not url: return None
+    # Only visit genuine ImgBB pages. Substring matching accepts URLs such as
+    # http://127.0.0.1/?ibb.co or https://ibb.co@internal-host/ (SSRF).
+    try:
+        parsed = urlsplit(url)
+        is_ibb_page = (parsed.scheme.lower() == "https" and
+                       parsed.hostname in ("ibb.co", "www.ibb.co") and
+                       parsed.username is None and parsed.password is None and
+                       parsed.port in (None, 443))
+    except ValueError:
+        is_ibb_page = False
+    if is_ibb_page:
+        try:
+            # Never follow redirects to untrusted/internal destinations.
+            async with session.get(url, timeout=10, allow_redirects=False) as resp:
+                if resp.status == 200:
+                    html_content = await resp.text()
+                    match = re.search(r'<meta property="og:image" content="([^"]+)"', html_content)
+                    if match: return match.group(1)
+        except Exception: pass
+    return url
+
+async def convert_all_ibb_links(urls):
+    async with aiohttp.ClientSession() as session:
+        tasks = [fetch_direct_ibb_url(session, u) for u in urls if u.strip()]
+        results = await asyncio.gather(*tasks)
+        return [r for r in results if r]
+
+# ─────────────────────────────────────────────────────────
+# 📝 ADMIN: shared create/edit studio
+# ─────────────────────────────────────────────────────────
+@post_routes.get('/admin/create_post')
+async def create_post_page(req):
+    role, _ = await get_auth(req)
+    if role != 'admin':
+        return web.HTTPFound('/dashboard')
+    body = build_post_editor(err=req.query.get('err', ''), msg=req.query.get('msg', ''))
+    return build_page("Create Post", body, "", "posts", role)
+
+
+@post_routes.get('/admin/edit_post/{id}')
+async def edit_post_page(req):
+    role, _ = await get_auth(req)
+    if role != 'admin':
+        return web.HTTPFound('/dashboard')
+    post_id = req.match_info['id']
+    try:
+        post = await posts_col.find_one({"_id": ObjectId(post_id)})
+    except Exception:
+        return web.HTTPFound('/posts?err=Invalid+post+ID')
+    if not post:
+        return web.HTTPFound('/posts?err=Post+not+found')
+    body = build_post_editor(post, post_id, req.query.get('err', ''), req.query.get('msg', ''))
+    return build_page("Edit Post", body, "", "posts", role)
+
+
+# ─────────────────────────────────────────────────────────
+# ⚙️ 3. API: PUBLISH & UPDATE POSTS
+# ─────────────────────────────────────────────────────────
+async def process_multipart_post(req, action="publish"):
+    reader = await req.multipart()
+    post_data = {"title": "", "description": "", "cover_image": "", "category": "Movies", "screenshots": [], "videos": [], "tags": []}
+    if action == "publish": post_data["created_at"] = int(time.time())
+    
+    screenshot_urls_raw = ""
+    uploaded_screenshots = []
+    temp_v_ids, temp_v_headings, temp_v_names = [], [], []
+    post_id = None
+    
+    while True:
+        part = await reader.next()
+        if part is None: break
+        p_name = part.name
+        
+        if p_name == 'post_id': post_id = (await part.read()).decode().strip()
+        elif p_name == 'title': post_data["title"] = (await part.read()).decode().strip()
+        elif p_name == 'description': post_data["description"] = (await part.read()).decode().strip()
+        elif p_name == 'category': post_data["category"] = (await part.read()).decode().strip()
+        elif p_name == 'tags': post_data["tags"] = [t.strip() for t in (await part.read()).decode().strip().split(",") if t.strip()]
+        
+        elif p_name == 'video_id': temp_v_ids.append((await part.read()).decode().strip())
+        elif p_name == 'video_heading': temp_v_headings.append((await part.read()).decode().strip())
+        elif p_name == 'video_name': temp_v_names.append((await part.read()).decode().strip())
+        
+        elif p_name == 'cover_url':
+            url = (await part.read()).decode().strip()
+            if url: post_data["cover_image"] = url
+        elif p_name == 'cover_file' and part.filename:
+            img_bytes = await part.read()
+            if not img_bytes:
+                raise ValueError('The selected cover image is empty.')
+            with io.BytesIO(img_bytes) as img_buf:
+                img_buf.name = "cover.jpg"
+                msg = await temp.BOT.send_photo(chat_id=THUMBNAIL_STORAGE_CHANNEL, photo=img_buf)
+            if not msg or not msg.photo:
+                raise RuntimeError('Cover image upload failed. Please retry.')
+            tg_id = msg.photo.sizes[-1].file_id if hasattr(msg.photo, "sizes") and msg.photo.sizes else msg.photo.file_id
+            post_data["cover_image"] = f"TG_ID:{tg_id}"
+        elif p_name == 'screenshot_urls': screenshot_urls_raw = (await part.read()).decode().strip()
+        elif p_name == 'screenshot_files' and part.filename:
+            img_bytes = await part.read()
+            if not img_bytes:
+                raise ValueError('A selected screenshot is empty.')
+            with io.BytesIO(img_bytes) as img_buf:
+                img_buf.name = f"ss_{int(time.time())}.jpg"
+                msg = await temp.BOT.send_photo(chat_id=THUMBNAIL_STORAGE_CHANNEL, photo=img_buf)
+            if not msg or not msg.photo:
+                raise RuntimeError('Screenshot upload failed. Please retry.')
+            tg_id = msg.photo.sizes[-1].file_id if hasattr(msg.photo, "sizes") and msg.photo.sizes else msg.photo.file_id
+            uploaded_screenshots.append(f"TG_ID:{tg_id}")
+
+    tasks = []
+    if post_data["cover_image"] and "ibb.co" in post_data["cover_image"]:
+        tasks.append(convert_all_ibb_links([post_data["cover_image"]]))
+
+    raw_urls = []
+    if screenshot_urls_raw:
+        raw_urls = [u.strip() for u in screenshot_urls_raw.split('\n') if u.strip()]
+        tasks.append(convert_all_ibb_links(raw_urls))
+        
+    if tasks:
+        all_results = await asyncio.gather(*tasks)
+        if len(tasks) == 1 and screenshot_urls_raw:
+             post_data["screenshots"].extend(all_results[0])
+        elif len(tasks) == 2:
+             if all_results[0]: post_data["cover_image"] = all_results[0][0]
+             post_data["screenshots"].extend(all_results[1])
+        elif len(tasks) == 1 and not screenshot_urls_raw:
+             if all_results[0]: post_data["cover_image"] = all_results[0][0]
+
+    post_data["screenshots"].extend(uploaded_screenshots)
+    if not post_data["title"] or not post_data["description"]:
+        raise ValueError('Title and description are required.')
+    if not (len(temp_v_ids) == len(temp_v_headings) == len(temp_v_names)):
+        raise ValueError('A selected video is incomplete. Check its episode and label.')
+    for vid, vheading, vname in zip(temp_v_ids, temp_v_headings, temp_v_names):
+        if not vid or not vname:
+            raise ValueError('Each selected video needs a file and button label.')
+        post_data["videos"].append({"file_id": vid, "heading": vheading or "Download Links", "custom_name": vname})
+
+    return post_data, post_id
+
+def _post_result(req, destination, error=None, status=400):
+    """Keep regular form redirects, while the editor can display errors in place."""
+    if 'application/json' in req.headers.get('Accept', ''):
+        return web.json_response({'error': error} if error else {'success': True, 'redirect': destination},
+                                 status=status if error else 200, dumps=fast_json)
+    if error:
+        return web.HTTPFound(destination + '?' + urlencode({'err': error}))
+    return web.HTTPFound(destination)
+
+
+@post_routes.post('/api/post/publish')
+async def api_publish_post(req):
+    role, _ = await get_auth(req)
+    if role != 'admin': return web.json_response({"error": "Unauthorized"}, status=403, dumps=fast_json)
+    try:
+        post_data, _ = await process_multipart_post(req, "publish")
+        await posts_col.insert_one(post_data)
+        return _post_result(req, '/posts?msg=Post+published+successfully!')
+    except Exception as e:
+        return _post_result(req, '/admin/create_post', str(e) or 'Could not publish the post.', 500)
+
+
+@post_routes.post('/api/post/update')
+async def api_update_post(req):
+    role, _ = await get_auth(req)
+    if role != 'admin':
+        if 'application/json' in req.headers.get('Accept', ''):
+            return _post_result(req, '/dashboard', 'Unauthorized', 403)
+        return web.HTTPFound('/dashboard')
+    try:
+        post_data, post_id = await process_multipart_post(req, "update")
+        if not post_id: return _post_result(req, '/posts', 'Missing post ID.')
+        oid = ObjectId(post_id)
+        old_post = await posts_col.find_one({"_id": oid})
+        if not old_post: return _post_result(req, '/posts', 'Post not found.', 404)
+        if not post_data.get("cover_image") and old_post.get("cover_image"):
+            post_data["cover_image"] = old_post["cover_image"]
+        result = await posts_col.update_one({"_id": oid}, {"$set": post_data})
+        if not result.matched_count:
+            return _post_result(req, '/posts', 'Post not found.', 404)
+        return _post_result(req, f'/post/{post_id}?msg=Post+updated+successfully!')
+    except Exception as e:
+        return _post_result(req, '/posts', str(e) or 'Could not update the post.', 500)
+
+@post_routes.post('/api/post/delete')
+async def api_delete_post(req):
+    role, _ = await get_auth(req)
+    if role != 'admin': return web.json_response({"success": False})
+    try:
+        data = await req.json()
+        await posts_col.delete_one({"_id": ObjectId(data.get('post_id'))})
+        return web.json_response({"success": True})
+    except: return web.json_response({"success": False})
+
+# ─────────────────────────────────────────────────────────
+# 🖼️ 4. API: SERVE TELEGRAM IMAGES FOR POSTS
+# ─────────────────────────────────────────────────────────
+@post_routes.get('/api/post/photo')
+async def get_post_photo(req):
+    tg_id = req.query.get("id")
+    if not tg_id: return web.Response(status=400)
+    try:
+        file_data = await temp.BOT.download_media(tg_id, in_memory=True)
+        if not file_data: return web.Response(status=404)
+        body_bytes = file_data.getvalue()
+        file_data.close()
+        return web.Response(body=body_bytes, content_type="image/jpeg", headers={"Cache-Control": "public, max-age=31536000"})
+    except: return web.Response(status=500)
+
+# ─────────────────────────────────────────────────────────
+# 🌐 5. PUBLIC ROUTE: POSTS DIRECTORY GRID (UPDATE SEARCH UI)
+# ─────────────────────────────────────────────────────────
+@post_routes.get('/posts')
+async def posts_directory_page(req):
+    role, tg_id = await get_auth(req)
+    if not role: return web.HTTPFound('/login')
+    if not await require_active_plan(role, tg_id): return web.HTTPFound('/premium_expired')
+    
+    all_posts, has_next_init = await catalog_page(posts_col, {})
+    
+    admin_btn = '''<button onclick="window.location.href='/admin/create_post'" style="background:var(--accent); color:#fff; border:none; padding:10px 15px; border-radius:8px; font-weight:800; cursor:pointer; font-size:13px; flex:1; min-width:130px; box-shadow:0 4px 15px rgba(229,9,20,0.3); transition:0.2s;">➕ Create</button>''' if role == 'admin' else ""
+    
+    search_ui = f'''
+    {DIRECTORY_CSS}
+    
+    <div class="search-box">
+        <div class="s-row-1" id="postSearchRow">
+            <input type="text" id="post_q" class="s-input" placeholder="Search movies, series, posts...">
+            <span class="s-spinner" id="postSpinner"></span>
+        </div>
+        <div class="s-row-2">
+            <div class="cdd-wrap" onclick="togglePostCDD('view', event)">
+                <span id="post_view_lbl">{'📄 Text' if DEFAULT_CATALOG_MODE == 'text' else '🖼️ Poster'}</span> <span class="cdd-arrow" aria-hidden="true">▼</span>
+                <div class="cdd-menu" id="post_view_menu">
+                    <div class="cdd-item" onclick="pickPostView('poster', '🖼️ Poster', event)">🖼️ Poster</div>
+                    <div class="cdd-item" onclick="pickPostView('text', '📄 Text', event)">📄 Text</div>
+                </div>
+            </div>
+            <div class="cdd-wrap" onclick="togglePostCDD('cat', event)">
+                <span id="post_cat_lbl">All</span> <span class="cdd-arrow" aria-hidden="true">▼</span>
+                <div class="cdd-menu" id="post_cat_menu">
+                    <div class="cdd-item" onclick="pickPostCat('All', 'All', event)">All</div>
+                    <div class="cdd-item" onclick="pickPostCat('Movies', '🎬 Movies', event)">🎬 Movies</div>
+                    <div class="cdd-item" onclick="pickPostCat('Web Series', '📺 Web Series', event)">📺 Web Series</div>
+                    <div class="cdd-item" onclick="pickPostCat('App Video', '📱 App Video', event)">📱 App Video</div>
+                    <div class="cdd-item" onclick="pickPostCat('Porn', '🔞 Porn', event)">🔞 Porn</div>
+                </div>
+            </div>
+            {admin_btn}
+        </div>
+    </div>
+    '''
+
+    post_items = ''.join(render_catalog_card(p, 'post') for p in all_posts)
+
+    grid_mode_cls = ' grid-text-mode' if DEFAULT_CATALOG_MODE == 'text' else ''
+    empty_grid = '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--muted);">No posts found.</div>'
+    initial_grid = f'<div id="post_grid_container" class="dir-grid{grid_mode_cls}">{post_items or empty_grid}</div>'
+
+    has_nxt_str = "true" if has_next_init else "false"
+
+    js_logic = f'''
+    <div class="pg-bar" id="post_pg_box" style="display:none;">
+        <button class="pg-btn" id="post_pBtn" onclick="prevPost()" disabled>Previous</button>
+        <span class="pg-info" id="post_pgInfo">Page 1</span>
+        <button class="pg-btn" id="post_nBtn" onclick="nextPost()">Next</button>
+    </div>
+
+    <script>
+    var pOff = 0, pLim = {CATALOG_PAGE_SIZE}, pPage = 1;
+    var postReqId = 0;
+    var pNext = {has_nxt_str};
+    var currentPCat = 'All'; var currentPView = MediaView.get('{DEFAULT_CATALOG_MODE}');
+    var lastPQ = "", lastPCat = "All", lastPView = "{DEFAULT_CATALOG_MODE}", lastPOff = 0;
+
+    document.addEventListener("DOMContentLoaded", () => {{
+        if(sessionStorage.getItem('ff_post_state')) {{
+            document.getElementById('post_q').value = sessionStorage.getItem('ff_post_q') || "";
+            currentPCat = sessionStorage.getItem('ff_post_cat') || "All";
+            currentPView = MediaView.get('{DEFAULT_CATALOG_MODE}');
+            pOff = parseInt(sessionStorage.getItem('ff_post_off') || "0");
+            pPage = parseInt(sessionStorage.getItem('ff_post_page') || "1");
+
+            const catMap = {{'All':'All', 'Movies':'🎬 Movies', 'Web Series':'📺 Web Series', 'App Video':'📱 App Video', 'Porn':'🔞 Porn'}};
+            const viewMap = {{'poster':'🖼️ Poster', 'text':'📄 Text'}};
+            document.getElementById('post_cat_lbl').innerText = catMap[currentPCat] || 'All';
+            document.getElementById('post_view_lbl').innerText = viewMap[currentPView] || viewMap['{DEFAULT_CATALOG_MODE}'];
+
+            applyPostViewMode();
+            searchPosts(true);
+        }} else {{
+            document.getElementById('post_view_lbl').innerText = currentPView === 'text' ? '📄 Text' : '🖼️ Poster';
+            applyPostViewMode();
+            updatePgUI();
+            staggerCards(document.getElementById('post_grid_container'));
+        }}
+    }});
+
+    MediaView.subscribe(function(value) {{
+        if(value===currentPView)return;
+        currentPView=value;document.getElementById('post_view_lbl').innerText=value==='text'?'📄 Text':'🖼️ Poster';
+        lastPView=currentPView;applyPostViewMode();
+    }});
+
+    function closeAllPostCDD() {{ document.getElementById('post_view_menu').style.display='none'; document.getElementById('post_cat_menu').style.display='none'; }}
+    document.addEventListener('click', closeAllPostCDD);
+
+    function togglePostCDD(type, e) {{
+        e.stopPropagation();
+        var menu = document.getElementById('post_' + type + '_menu');
+        var isVis = menu.style.display === 'block';
+        closeAllPostCDD();
+        if (!isVis) menu.style.display = 'block';
+    }}
+
+    function pickPostView(val, lbl, e) {{ e.stopPropagation(); currentPView = MediaView.set(val); lastPView = currentPView; document.getElementById('post_view_lbl').innerText = lbl; closeAllPostCDD(); applyPostViewMode(); }}
+    function pickPostCat(val, lbl, e) {{ e.stopPropagation(); currentPCat = val; document.getElementById('post_cat_lbl').innerText = lbl; closeAllPostCDD(); resetPost(); searchPosts(); }}
+
+    function applyPostViewMode() {{
+        var grid = document.getElementById('post_grid_container');
+        if(currentPView === 'text') grid.classList.add('grid-text-mode');
+        else grid.classList.remove('grid-text-mode');
+    }}
+
+    async function searchPosts(forceRestore = false) {{
+        var q = document.getElementById('post_q').value.trim();
+
+        if (!forceRestore && q === lastPQ && currentPCat === lastPCat && currentPView === lastPView && pOff === lastPOff) {{ return; }}
+
+        lastPQ = q; lastPCat = currentPCat; lastPView = currentPView; lastPOff = pOff;
+
+        sessionStorage.setItem('ff_post_state', '1');
+        sessionStorage.setItem('ff_post_q', q);
+        sessionStorage.setItem('ff_post_cat', currentPCat);
+        sessionStorage.setItem('ff_post_view', currentPView);
+        sessionStorage.setItem('ff_post_off', pOff);
+        sessionStorage.setItem('ff_post_page', pPage);
+
+        var myReq = ++postReqId;
+        var grid = document.getElementById('post_grid_container');
+        var row = document.getElementById('postSearchRow');
+        var loadTimer = setTimeout(function() {{
+            if (myReq !== postReqId) return;
+            if (row) row.classList.add('loading');
+        }}, 150);
+        try {{
+            var res = await fetch(`/api/posts/search?q=${{encodeURIComponent(q)}}&offset=${{pOff}}&category=${{encodeURIComponent(currentPCat)}}`);
+            if (myReq !== postReqId) {{ clearTimeout(loadTimer); return; }}
+            clearTimeout(loadTimer);
+            if (row) row.classList.remove('loading');
+            if (!res.ok) throw new Error("HTTP " + res.status);
+            var data = await res.json();
+            if (myReq !== postReqId) return;
+            grid.innerHTML = data.html;
+            staggerCards(grid);
+            pNext = data.has_next;
+            applyPostViewMode();
+            updatePgUI();
+        }} catch(e) {{ clearTimeout(loadTimer); if (myReq !== postReqId) return; if (row) row.classList.remove('loading'); lastPQ = null; grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:var(--accent);">Error loading posts! Please retry.</div>'; }}
+    }}
+    function updatePgUI() {{ var box = document.getElementById('post_pg_box'); box.style.display = (pOff === 0 && !pNext) ? 'none' : 'flex'; document.getElementById('post_pBtn').disabled = (pOff === 0); document.getElementById('post_nBtn').disabled = !pNext; document.getElementById('post_pgInfo').innerText = 'Page ' + pPage; }}
+    function resetPost() {{ pOff = 0; pPage = 1; }}
+    function nextPost() {{ if(pNext) {{ pOff += pLim; pPage++; searchPosts(); window.scrollTo(0, 50); }} }}
+    function prevPost() {{ if(pOff > 0) {{ pOff = Math.max(0, pOff - pLim); pPage--; searchPosts(); window.scrollTo(0, 50); }} }}
+    document.getElementById('post_q').addEventListener('keydown', function(e) {{ if(e.key === 'Enter') {{ clearTimeout(postLiveTimer); resetPost(); searchPosts(); }} }});
+    var postLiveTimer;
+    document.getElementById('post_q').addEventListener('input', function() {{
+        clearTimeout(postLiveTimer);
+        postLiveTimer = setTimeout(function() {{ resetPost(); searchPosts(); }}, 350);
+    }});
+    </script>'''
+
+    return build_page("Posts Catalog", f'<div class="main" style="padding-top:20px; max-width:1100px; margin:0 auto; padding-left:20px; padding-right:20px;">{search_ui}{initial_grid}{js_logic}</div>', "", "posts", role)
+
+@post_routes.get('/api/posts/search')
+async def api_posts_search(req):
+    role, tg_id = await get_auth(req)
+    if not role or not await require_active_plan(role, tg_id):
+        return web.json_response({"error": "Access denied."}, status=403, dumps=fast_json)
+    q = req.query.get("q", "").strip()
+    category = req.query.get("category", "All").strip()
+    
+    offset = req.query.get("offset", 0)
+    
+    query = {}
+    if q: 
+        safe_q = re.escape(q)
+        query["$or"] = [{"title": {"$regex": safe_q, "$options": "i"}}, {"tags": {"$regex": safe_q, "$options": "i"}}]
+    
+    if category and category != "All":
+        query["category"] = category
+        
+    try:
+        docs, has_next = await catalog_page(posts_col, query, offset)
+    except Exception:
+        return web.json_response({"error": "Post search temporarily unavailable."}, status=503, dumps=fast_json)
+    
+    if not docs: return web.json_response({"html": '<div style="grid-column:1/-1; text-align:center; color:var(--muted); padding:40px;">No posts matching your search.</div>', "has_next": False}, dumps=fast_json)
+        
+    html_out = ''.join(render_catalog_card(p, 'post') for p in docs)
+
+    return web.json_response({"html": html_out, "has_next": has_next}, dumps=fast_json)
+
+# ─────────────────────────────────────────────────────────
+# 🍿 6. PUBLIC ROUTE: SINGLE POST VIEW
+# ─────────────────────────────────────────────────────────
+@post_routes.get('/post/{id}')
+async def single_post_display(req):
+    role, tg_id = await get_auth(req)
+    if not role: return web.HTTPFound('/login')
+    if not await require_active_plan(role, tg_id): return web.HTTPFound('/premium_expired')
+    
+    try:
+        post = await posts_col.find_one({"_id": ObjectId(req.match_info['id'])})
+        if not post: return web.Response(text="Post Not Found", status=404)
+    except: return web.Response(text="Invalid ID", status=400)
+    
+    cover = post.get("cover_image", "")
+    img_src = html.escape(post_image_src(cover), quote=True)
+    
+    # 📌 Show Category along with tags
+    cat = post.get("category", "")
+    cat_html = f'<span style="background:var(--accent); border:1px solid var(--accent); color:#fff; font-size:12px; padding:5px 12px; border-radius:6px; font-weight:800; letter-spacing:0.5px;">📁 {html.escape(cat)}</span>' if cat else ""
+    
+    tags_html = "".join([f'<span style="background:var(--bg4); border:1px solid var(--border); color:var(--text); font-size:12px; padding:5px 12px; border-radius:6px; font-weight:700;">#{html.escape(t)}</span>' for t in post.get("tags", [])])
+    tags_div = f'<div style="display:flex; flex-wrap:wrap; gap:10px; background:var(--bg); padding:15px; border-radius:8px; margin-top:15px; margin-bottom:15px;">{cat_html}{tags_html}</div>' if (tags_html or cat_html) else ""
+    
+    # 🍿 Premium Netflix Style Episodes Layout
+    video_buttons = ""
+    videos = post.get("videos", [])
+    if not videos:
+        video_buttons = '<div style="color:var(--muted); font-size:14px; font-weight:bold;">No media attached.</div>'
+    else:
+        grouped_vids = {}
+        for v in videos:
+            h = v.get("heading", "Download Links")
+            if h not in grouped_vids: grouped_vids[h] = []
+            grouped_vids[h].append(v)
+            
+        for heading, v_list in grouped_vids.items():
+            video_buttons += f'''
+            <div style="margin-bottom:20px; background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:15px; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+                <div style="font-size:16px; font-weight:900; color:var(--text); margin-bottom:12px; display:flex; align-items:center; gap:10px;">
+                    <span style="background:var(--accent); width:5px; height:18px; border-radius:4px;"></span>
+                    {html.escape(heading)}
+                </div>
+                <div style="display:flex; flex-wrap:wrap; gap:10px; padding-left:15px;">'''
+            
+            for v in v_list:
+                vid_id = html.escape(str(v.get('file_id') or ''), quote=True)
+                v_name = html.escape(v.get('custom_name', 'Play'))
+                player_title = html.escape(f"{heading} · {v.get('custom_name', 'Play')}", quote=True)
+                video_buttons += f'<button type="button" class="ep-btn" data-fid="{vid_id}" data-title="{player_title}" onclick="openInlinePlayer(this.dataset.fid,this.dataset.title)">▶ {v_name}</button>'
+            
+            video_buttons += '</div></div>'
+    
+    ss_html = ""
+    for ss in post.get("screenshots", []):
+        s_src = html.escape(post_image_src(ss), quote=True)
+        ss_html += f'<div style="border:1px solid var(--border); border-radius:8px; overflow:hidden; aspect-ratio:16/9; background:var(--bg3); box-shadow:0 4px 15px rgba(0,0,0,0.2);"><img src="{s_src}" style="width:100%; height:100%; object-fit:cover; cursor:pointer; transition:0.3s;" onmouseover="this.style.transform=\'scale(1.03)\'" onmouseout="this.style.transform=\'scale(1)\'" onclick="window.open(this.src, \'_blank\')"></div>'
+    
+    # 📸 Screenshots Grid (No Box)
+    gallery_section = f'''
+    <h3 style="font-size:20px; font-weight:800; color:var(--text); border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:20px; margin-top:40px; display:flex; align-items:center; gap:10px;">📸 Screenshots</h3>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:20px;">{ss_html}</div>
+    ''' if ss_html else ""
+
+    admin_actions = f'''
+    <div style="margin-top:30px; padding:20px; border:1px dashed rgba(160,8,8,0.5); border-radius:12px; display:flex; gap:10px; background:var(--bg2);">
+        <a href="/admin/edit_post/{str(post['_id'])}" style="background:var(--bg3); border:1px solid var(--border); color:var(--text); padding:12px 24px; border-radius:8px; font-weight:800; text-decoration:none; font-size:14px; transition:0.2s;">✏️ Edit Post</a>
+        <button onclick="if(confirm('Are you sure you want to delete this post?')) {{ fetch('/api/post/delete', {{method:'POST', body:JSON.stringify({{post_id:'{str(post['_id'])}'}})}}).then(r=>r.json()).then(d=>{{ if(d.success) window.location.href='/posts'; else alert('Failed to delete'); }}) }}" style="background:rgba(160,8,8,0.8); border:none; color:#fff; padding:12px 24px; border-radius:8px; font-weight:800; cursor:pointer; font-size:14px; transition:0.2s;">🗑️ Delete</button>
+    </div>
+    ''' if role == 'admin' else ""
+
+    page_body = f'''
+    <style>
+        .ep-btn {{ background:var(--bg); border:1px solid var(--accent); color:var(--accent); font-family:inherit; font-weight:800; font-size:13px; text-decoration:none; padding:10px 20px; border-radius:6px; transition:0.2s; box-shadow:0 4px 10px rgba(0,0,0,0.2); display:inline-block; cursor:pointer; }}
+        .ep-btn:hover {{ background:var(--accent); color:#fff; transform:translateY(-2px); }}
+        .ep-btn:active {{ background:#fff !important; color:var(--accent) !important; border-color:#fff !important; transform:scale(0.92); transition:0s; }}
+        
+        /* 🔥 Hero Section Flexbox Layout */
+        .hero-section {{ display:flex; flex-wrap:wrap; gap:30px; margin-bottom:35px; align-items:flex-start; }}
+        .hero-poster {{ flex:1 1 250px; max-width:320px; margin:0 auto; width:100%; aspect-ratio:3/4; overflow:hidden; border-radius:12px; box-shadow:0 12px 35px rgba(0,0,0,0.4); border:1px solid var(--border); }}
+        .hero-poster img {{ width:100%; height:100%; object-fit:cover; }}
+        .hero-details {{ flex:2 1 400px; background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:30px; box-shadow:0 4px 15px rgba(0,0,0,0.1); }}
+        
+        @media(max-width:768px) {{
+            .hero-poster {{ max-width:280px; }}
+            .hero-details {{ padding:20px; }}
+        }}
+    </style>
+
+    <div class="main" style="max-width:950px; margin:30px auto; padding:0 20px;">
+        <div style="display:flex; align-items:center; gap:15px; margin-bottom:25px;">
+            <a href="/posts" style="background:var(--bg3); color:var(--text); text-decoration:none; padding:8px 16px; border-radius:6px; font-weight:700; font-size:13px; border:1px solid var(--border); transition:0.2s;">← Catalog</a>
+            <h2 style="font-size:22px; font-weight:800; color:var(--text); margin:0;">View Post</h2>
+        </div>
+        
+        <div class="hero-section">
+            <div class="hero-poster">
+                <img src="{img_src}" alt="Poster">
+            </div>
+            <div class="hero-details">
+                <h1 style="font-size:32px; font-weight:900; color:var(--text); margin:0;">{html.escape(post.get("title", ""))}</h1>
+                {tags_div}
+                <div style="font-size:15px; color:var(--muted); line-height:1.7; margin-top:10px; white-space:pre-line; font-weight:500;">
+                    {html.escape(post.get("description", ""))}
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-bottom:25px;">
+            <h3 style="font-size:20px; font-weight:800; color:var(--text); border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:25px; display:flex; align-items:center; gap:10px;">🍿 Episodes / Download Links</h3>
+            {video_buttons}
+        </div>
+        
+        {gallery_section}
+        {admin_actions}
+
+    </div>
+    '''
+    return build_page(f"{post.get('title', 'Post')} - Catalog", page_body, "", "posts", role)

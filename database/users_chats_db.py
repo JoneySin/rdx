@@ -1,0 +1,485 @@
+import asyncio
+import logging
+import hashlib
+import hmac
+import secrets
+import time
+import weakref
+from datetime import datetime, timedelta, timezone
+from pymongo import ReturnDocument
+from zoneinfo import ZoneInfo
+from pymongo import AsyncMongoClient
+from pymongo.errors import DuplicateKeyError
+from info import (DATABASE_URL, DATABASE_NAME, FILE_CAPTION, 
+                  SPELL_CHECK, PROTECT_CONTENT, AUTO_DELETE, TIME_ZONE)
+
+logger = logging.getLogger(__name__)
+
+# =========================================
+# 🌍 TIMEZONE HELPER ENGINE
+# =========================================
+def get_local_now():
+    """info.py के TIME_ZONE के अनुसार लाइव लोकल टाइम देता है"""
+    tz = ZoneInfo(TIME_ZONE)
+    return datetime.now(tz)
+
+# =========================================
+# 💎 PREMIUM PLAN STATE — SINGLE SOURCE OF TRUTH
+# यही dict plan deactivate/reset होने पर लिखा जाता है। पहले यह पूरा 11-key वाला
+# ब्लॉक 5 अलग-अलग फाइलों में हुबहू कॉपी था (utils.is_premium, premium.check_
+# premium_expired, premium.manage_premium, premium.pay_action और यहाँ df_prm) —
+# एक भी reminder flag add/rename करना हो तो 5 जगह edit करना पड़ता था और एक जगह
+# छूट जाने पर plan "आधा reset" हो जाता था। अब हर जगह इसी को copy किया जाता है।
+# ⚠️ हमेशा dict(...) copy पास करें, कभी यह object सीधे mutate न करें।
+# =========================================
+DEFAULT_PLAN_STATUS = {
+    "expire": None,
+    "trial": False,
+    "plan": "",
+    "premium": False,
+    "reminded_12h": False,
+    "reminded_6h": False,
+    "reminded_3h": False,
+    "reminded_1h": False,
+    "reminded_30m": False,
+    "reminded_10m": False,
+    "last_reminder_id": 0,
+}
+
+# =========================================
+# 🌐 WEB AUTHENTICATION DATABASE (RAM Protected)
+# =========================================
+# New passwords use per-user salts and a deliberately expensive KDF. Legacy
+# SHA-256 hashes are verified once and upgraded on a successful login.
+PASSWORD_ITERATIONS = 600_000
+_PASSWORD_GATES = weakref.WeakKeyDictionary()
+
+
+def hash_password(password):
+    salt = secrets.token_hex(16)
+    digest = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), bytes.fromhex(salt), PASSWORD_ITERATIONS).hex()
+    return f'pbkdf2_sha256${PASSWORD_ITERATIONS}${salt}${digest}'
+
+
+def verify_password(password, stored):
+    if not isinstance(password, str) or not isinstance(stored, str):
+        return False
+    if '$' not in stored:
+        # Legacy accounts used an unsalted sha256 hex string.
+        try:
+            return hmac.compare_digest(hashlib.sha256(password.encode('utf-8')).hexdigest(), stored)
+        except TypeError:
+            return False
+    try:
+        algorithm, rounds, salt, digest = stored.split('$')
+        rounds = int(rounds)
+        if (algorithm != 'pbkdf2_sha256' or not 1 <= rounds <= 2_000_000
+                or len(salt) != 32 or len(digest) != 64):
+            return False
+        computed = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), bytes.fromhex(salt), rounds).hex()
+        return hmac.compare_digest(computed, digest)
+    except (ValueError, TypeError):
+        return False
+
+
+async def _password_work(func, *args):
+    # Keep password hashing off the event loop and bound CPU-heavy work on the
+    # small Koyeb instance. The gate is per loop (tests create multiple loops).
+    loop = asyncio.get_running_loop()
+    gate = _PASSWORD_GATES.get(loop)
+    if gate is None:
+        gate = _PASSWORD_GATES[loop] = asyncio.Semaphore(2)
+    async with gate:
+        return await asyncio.to_thread(func, *args)
+
+# ── 🔐 OTP / Session सेटिंग्स ──
+OTP_TTL = 600          # OTP 10 मिनट वैध
+OTP_MAX_TRIES = 5      # एक OTP पर इतने गलत प्रयास के बाद OTP रद्द
+OTP_MAX_SENDS = 3      # 10 मिनट में एक Telegram ID पर इतने OTP ही भेजे जा सकते हैं
+
+
+class OTPRateLimited(Exception):
+    """बहुत जल्दी-जल्दी OTP माँगा गया।"""
+
+
+class WebAuthDB:
+    def __init__(self, db):
+        self.col = db["web_users"] 
+        self.sessions = db["web_sessions"]     # लॉगिन सेशन (रीस्टार्ट पर भी बचे रहते हैं)
+        
+    async def create_user(self, tg_id, email, password):
+        # कर्सर लोड बचाने के लिए स्ट्रिक्ट प्रोजेक्शन {"_id": 1} लागू
+        if await self.col.find_one({"$or": [{"tg_id": tg_id}, {"email": email}]}, {"_id": 1}):
+            return False, "Telegram ID or Email already registered!"
+            
+        user_data = {
+            "tg_id": tg_id,
+            "email": email,
+            "password": await _password_work(hash_password, password),
+            "joined_date": get_local_now() # सेंट्रलाइज्ड टाइमज़ोन सिंक
+        }
+        await self.col.insert_one(user_data)
+        return True, "Account Created Successfully!"
+
+    async def verify_login(self, email, password):
+        if not isinstance(email, str) or not isinstance(password, str):
+            return None
+        user = await self.col.find_one({"email": email})
+        if not user or not await _password_work(verify_password, password, user.get("password")):
+            return None
+        old_hash = user["password"]
+        if '$' not in old_hash:
+            new_hash = await _password_work(hash_password, password)
+            result = await self.col.update_one(
+                {"_id": user["_id"], "password": old_hash}, {"$set": {"password": new_hash}}
+            )
+            if not result.matched_count:
+                # Another login may have upgraded the same legacy hash, or a
+                # reset may have changed it. Authenticate against current data.
+                user = await self.col.find_one({"_id": user["_id"], "email": email})
+                if not user or not await _password_work(verify_password, password, user.get("password")):
+                    return None
+            else:
+                user["password"] = new_hash
+        return user
+
+    # ───────────── 🔐 PASSWORD-RESET OTP ─────────────
+    # ✅ FIX: पहले otp_expiry को tz-aware datetime में सेव करके MongoDB से naive datetime में
+    # वापस पढ़ा जाता था और दोनों की तुलना TypeError देती थी — यानी सही OTP डालने पर भी
+    # रीसेट 500 एरर से क्रैश होता था। अब समय epoch (संख्या) में सेव होता है, कोई टाइमज़ोन गड़बड़ नहीं।
+    async def generate_otp(self, tg_id):
+        # Compare-and-set the send counter: concurrent requests must not all
+        # observe the same count and bypass the per-user rate limit.
+        for _ in range(12):
+            user = await self.col.find_one({"tg_id": tg_id}, {"otp_win": 1, "otp_sends": 1})
+            if not user:
+                return None
+            now = time.time()
+            win, sends = user.get("otp_win", 0), user.get("otp_sends", 0)
+            if now - win > OTP_TTL:
+                win, sends = now, 0
+            if sends >= OTP_MAX_SENDS:
+                raise OTPRateLimited()
+            otp = str(secrets.randbelow(900000) + 100000)
+            condition = {"_id": user["_id"]}
+            for field in ("otp_win", "otp_sends"):
+                condition[field] = user[field] if field in user else {"$exists": False}
+            result = await self.col.update_one(condition, {
+                "$set": {"otp": otp, "otp_exp": now + OTP_TTL, "otp_tries": 0,
+                         "otp_win": win, "otp_sends": sends + 1},
+                "$unset": {"otp_expiry": ""}})
+            if result.matched_count:
+                return otp
+        raise OTPRateLimited()
+
+    async def verify_otp_and_reset(self, tg_id, otp, new_password):
+        otp = str(otp or "").strip()
+        if not otp or not new_password:
+            return False
+        # हर प्रयास पहले गिना जाता है (atomic) ताकि एक साथ कई अंदाज़े भी सीमा पार न कर सकें
+        user = await self.col.find_one_and_update(
+            {"tg_id": tg_id, "otp": {"$exists": True}},
+            {"$inc": {"otp_tries": 1}},
+            projection={"otp": 1, "otp_exp": 1, "otp_tries": 1},
+            return_document=ReturnDocument.AFTER)
+        if not user:
+            return False
+        clear = {"$unset": {"otp": "", "otp_exp": "", "otp_tries": "", "otp_expiry": ""}}
+        # Only act on the exact OTP observed above: a concurrent request may
+        # already have consumed it or issued a newer one.
+        current_otp = {"tg_id": tg_id, "otp": user.get("otp"), "otp_exp": user.get("otp_exp")}
+        if user.get("otp_exp", 0) <= time.time() or user.get("otp_tries", 0) > OTP_MAX_TRIES:
+            await self.col.update_one(current_otp, clear)
+            return False
+        if not hmac.compare_digest(str(user.get("otp", "")).encode(), otp.encode()):
+            if user.get("otp_tries", 0) >= OTP_MAX_TRIES:
+                await self.col.update_one(current_otp, clear)
+            return False
+        new_hash = await _password_work(hash_password, new_password)
+        result = await self.col.update_one(
+            {"tg_id": tg_id, "otp": user.get("otp"),
+             "otp_exp": {"$eq": user.get("otp_exp"), "$gt": time.time()},
+             "otp_tries": {"$lte": OTP_MAX_TRIES}},
+            {"$set": {"password": new_hash}, **clear})
+        return bool(result.matched_count)
+
+    # ───────────── 🍪 LOGIN SESSIONS (DB में, ताकि रीस्टार्ट/री-डिप्लॉय पर लॉगआउट न हो) ─────────────
+    async def create_session(self, sid, tg_id, expiry):
+        await self.sessions.replace_one(
+            {"_id": sid},
+            {"_id": sid, "tg_id": tg_id, "expiry": expiry,
+             "expire_at": datetime.fromtimestamp(expiry, tz=timezone.utc)},   # TTL index इसी से मिटाता है
+            upsert=True)
+
+    async def get_session(self, sid):
+        d = await self.sessions.find_one({"_id": sid}, {"tg_id": 1, "expiry": 1})
+        if d and d.get("expiry", 0) > time.time():
+            return {"tg_id": d["tg_id"], "expiry": d["expiry"]}
+        return None
+
+    async def delete_session(self, sid):
+        await self.sessions.delete_one({"_id": sid})
+
+    async def delete_user_sessions(self, tg_id):
+        await self.sessions.delete_many({"tg_id": tg_id})
+
+
+# =========================================
+# 🤖 BOT & MAIN DATABASE — RAM & Security Guarded
+# =========================================
+class Database:
+    def __init__(self):
+        # ✅ PYMONGO ASYNC ENGINE: कोएब आइडल थ्रॉटलिंग और कनेक्शन DROP से सुरक्षित ट्यूनिंग
+        self.client = AsyncMongoClient(
+            DATABASE_URL, 
+            minPoolSize=2,            # 2 warm connections: first click/query doesn't pay TLS setup
+            maxPoolSize=15,           # हैवी ट्रैफिक के लिए 15 कनेक्शंस पूल
+            maxIdleTimeMS=300000,     # 5 मिनट तक idle sockets warm रहें (पहले 30s)
+            waitQueueTimeoutMS=10000, # pool saturated हो तो 10s में fail, forever hang नहीं
+            serverSelectionTimeoutMS=5000
+        )
+        self.db = self.client[DATABASE_NAME]
+        
+        # Collections
+        self.users, self.groups, self.premium = self.db.Users, self.db.Groups, self.db.Premiums
+        self.settings = self.db.Settings
+        self.delete_queue = self.db.AutoDeleteQueue 
+
+    async def _ensure_indexes(self):
+        # बोट कलेक्शंस के लिए इंडेक्स सिंक
+        for col in [self.users, self.groups, self.premium, self.settings]:
+            try: 
+                await col.create_index("id", unique=True)
+            except Exception as e: 
+                logger.warning(f"Index warn: {e}")
+        
+        # ✅ NEW UPGRADE: WebAuthDB (web_users) के लिए स्ट्रिक्ट यूनिक इंडेक्सेस ट्यूनिंग (रैम और COLLSCAN से सुरक्षा)
+        try:
+            web_users = self.db["web_users"]
+            await web_users.create_index("tg_id", unique=True)
+            await web_users.create_index("email", unique=True)
+            logger.info("✅ Web Auth unique indexes (tg_id, email) initialized successfully.")
+            web_sessions = self.db["web_sessions"]
+            await web_sessions.create_index("expire_at", expireAfterSeconds=0)   # समय बीतते ही सेशन अपने-आप मिटे
+            await web_sessions.create_index("tg_id")
+        except Exception as e:
+            if "already exists" not in str(e):
+                logger.warning(f"Web Auth Index warn: {e}")
+        
+        # अगर डेटाबेस कतार में पुरानी 'id_1' अवैध इंडेक्स मौजूद है, तो उसे पूरी तरह से डिस्ट्रॉय करो
+        try:
+            await self.delete_queue.drop_index("id_1")
+            logger.info("🗑️ Old defective unique index 'id_1' dropped from AutoDeleteQueue.")
+        except Exception:
+            pass # अगर पहले से मौजूद नहीं है तो सेफ बाईपास
+
+        # ऑटो-डिलीट कतार के लिए इंडेक्स सिंक
+        try:
+            await self.delete_queue.create_index([("delete_at", 1)])
+        except: pass
+
+    # ⚙️ Default Global Settings Config
+    df_set = {"file_secure": PROTECT_CONTENT, "spell_check": SPELL_CHECK, "auto_delete": AUTO_DELETE, "caption": FILE_CAPTION, "search_enabled": True, "blacklist": [], "dlink": {}, "notes": {}}
+
+    # ✅ DRY: ऊपर वाले DEFAULT_PLAN_STATUS को ही base माना गया है (कॉपी नहीं, वही object)
+    df_prm = DEFAULT_PLAN_STATUS
+
+    df_ban = {"is_banned": False, "ban_reason": ""}
+    df_chat = {"is_disabled": False, "reason": ""}
+
+    # ───────────────── USERS (Strict Premium Model) ─────────────────
+    async def add_user(self, uid, name): 
+        await self.users.update_one({"id": int(uid)}, {"$set": {"name": name}, "$setOnInsert": {"ban_status": self.df_ban}}, upsert=True)
+        
+    async def is_user_exist(self, uid): 
+        return bool(await self.users.find_one({"id": int(uid)}, {"_id": 1}))
+        
+    async def total_users_count(self): 
+        return await self.users.count_documents({})
+    
+    # 'get_all_users' (पुराना ब्रॉडकास्ट कर्सर) पूरी तरह हटा दिया गया है ताकि रैम लीक न हो।
+    
+    async def ban_user(self, uid, rsn="No Reason"): 
+        await self.users.update_one({"id": int(uid)}, {"$set": {"ban_status": {"is_banned": True, "ban_reason": rsn}}}, upsert=True)
+        
+    async def unban_user(self, uid): 
+        await self.users.update_one({"id": int(uid)}, {"$set": {"ban_status": self.df_ban}})
+        
+    # ───────────────── GROUPS ─────────────────
+    async def add_chat(self, gid, title): 
+        await self.groups.update_one({"id": int(gid)}, {"$set": {"title": title}, "$setOnInsert": {"settings": self.df_set, "chat_status": self.df_chat}}, upsert=True)
+        
+    async def get_chat(self, gid): 
+        return (await self.groups.find_one({"id": int(gid)}, {"chat_status": 1}) or {}).get("chat_status", None)
+        
+    async def total_chat_count(self): 
+        return await self.groups.count_documents({})
+    
+    async def disable_chat(self, gid, rsn="No Reason"): 
+        await self.groups.update_one({"id": int(gid)}, {"$set": {"chat_status": {"is_disabled": True, "reason": rsn}}})
+        
+    async def re_enable_chat(self, gid): 
+        await self.groups.update_one({"id": int(gid)}, {"$set": {"chat_status": self.df_chat}})
+
+    # ───────────────── SETTINGS & INLINE UI MGMT ─────────────────
+    async def update_settings(self, gid, st): 
+        await self.groups.update_one({"id": int(gid)}, {"$set": {"settings": st}}, upsert=True)
+        
+    async def get_settings(self, gid): 
+        return {**self.df_set, **((await self.groups.find_one({"id": int(gid)}, {"settings": 1})) or {}).get("settings", {})}
+    
+    # ───────────────── BOT FEATURE FLAGS ─────────────────
+    async def get_send_all_enabled(self):
+        """Global admin switch for the Send All group buttons (default ON)."""
+        doc = await self.settings.find_one({"id": "send_all_enabled"}, {"value": 1})
+        return True if not doc else bool(doc.get("value", True))
+
+    async def set_send_all_enabled(self, enabled):
+        await self.settings.update_one(
+            {"id": "send_all_enabled"},
+            {"$set": {"value": bool(enabled)}},
+            upsert=True,
+        )
+
+    # ───────────────── PREMIUM INTEGRITY SYSTEM ─────────────────
+    async def get_plan(self, uid): 
+        return {**self.df_prm, **((await self.premium.find_one({"id": int(uid)}, {"status": 1})) or {}).get("status", {})}
+        
+    async def update_plan(self, uid, data): 
+        await self.premium.update_one({"id": int(uid)}, {"$set": {"status": data}}, upsert=True)
+        
+    async def decide_payment(self, uid, chat_id, message_id, action, admin_id, status=None):
+        """Atomically record one decision per receipt alongside any plan activation.
+
+        The existing unique Premiums.id index makes concurrent first-time account
+        creation safe. The decision and status update are one MongoDB document write,
+        so a duplicate callback cannot activate or reject the receipt twice.
+        """
+        uid = int(uid)
+        key = f"{int(chat_id)}_{int(message_id)}"
+        field = f"payment_decisions.{key}"
+        # Fail closed if the unique index is missing or cannot be built; without
+        # it simultaneous first-time approvals could create duplicate user docs.
+        await self.premium.create_index("id", unique=True)
+        try:
+            await self.premium.update_one(
+                {"id": uid}, {"$setOnInsert": {"status": dict(self.df_prm)}}, upsert=True
+            )
+        except DuplicateKeyError:
+            # Another handler created this user's Premiums record concurrently.
+            pass
+        decision = {"action": action, "admin_id": int(admin_id), "at": datetime.now(timezone.utc)}
+        changes = {field: decision}
+        if status is not None:
+            changes["status"] = status
+        result = await self.premium.update_one(
+            {"id": uid, field: {"$exists": False}}, {"$set": changes}
+        )
+        return bool(result.matched_count)
+
+    async def get_premium_users(self): 
+        # प्रीमियम लिस्ट एक्सपोर्ट करते समय केवल काम के फील्ड्स प्रोजेक्ट करें (Zero RAM Overhead)
+        return self.premium.find({}, {"id": 1, "status": 1})
+
+    # ───────────────── SECURITY STATS BREAKDOWN ─────────────────
+    async def get_banned(self):
+        banned_users = [u["id"] async for u in self.users.find({"ban_status.is_banned": True}, {"id": 1})]
+        banned_groups = [g["id"] async for g in self.groups.find({"chat_status.is_disabled": True}, {"id": 1})]
+        return banned_users, banned_groups
+
+    # ───────────────── ⏳ PERSISTENT AUTO-DELETE QUEUE ENGINE ─────────────────
+    async def add_to_delete_queue(self, chat_id, message_id, delay_seconds):
+        if not chat_id or not message_id:
+            return False 
+            
+        # Elapsed time is measured in UTC so DST transitions cannot shift the deadline.
+        delete_at = get_local_now().astimezone(timezone.utc) + timedelta(seconds=delay_seconds)
+        
+        # चैट आईडी और मैसेज आईडी का एकदम यूनिक कॉम्बो स्ट्रिंग बनाओ ताकि 'id: null' का लफड़ा हमेशा के लिए खत्म हो जाए!
+        task_id = f"{int(chat_id)}_{int(message_id)}"
+        
+        await self.delete_queue.update_one(
+            {"_id": task_id},
+            {
+                "$set": {
+                    "_id": task_id,
+                    "chat_id": int(chat_id),
+                    "message_id": int(message_id),
+                    "delete_at": delete_at
+                }
+            },
+            upsert=True
+        )
+
+    async def get_expired_delete_tasks(self):
+        now = get_local_now()
+        # Bounded batch: a large backlog must not monopolise the event loop and
+        # delay /start, searches or callback edits. The next 15 s cycle continues.
+        return self.delete_queue.find({"delete_at": {"$lte": now}}).sort("delete_at", 1).limit(100)
+
+    async def remove_from_delete_queue(self, chat_id, message_id):
+        # डिलीट टास्क रिमूव करते समय भी सीधे यूनिक कॉम्बो की को टारगेट करें
+        task_id = f"{int(chat_id)}_{int(message_id)}"
+        await self.delete_queue.delete_one({"_id": task_id})
+
+    # ───────────────── 🎥 VIDEO STREAM ANALYTICS COUNTER ─────────────────
+    async def track_video_play(self):
+        """वेबसाइट / मिनी-ऐप पर स्ट्रीम प्ले होने की ग्लोबल काउंटिंग रिकॉर्ड करता है"""
+        try:
+            await self.settings.update_one(
+                {"id": "global_stream_stats"},
+                {"$inc": {"total_web_plays": 1}},
+                upsert=True
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Error in track_video_play pipeline: {e}")
+            return False
+
+    # ───────────────── 👥 LIVE DASHBOARD WEB LOGINERS COUNTERS ─────────────────
+    async def get_today_logged_in_users_count(self):
+        """आज वेबसाइट पर लॉगिन करने वाले एक्टिव यूज़र्स की संख्या देता है"""
+        try:
+            from utils import temp
+            ram_users = set()
+
+            # 1. Active Live RAM Sessions से एक्टिव टोकन्स स्कैन करें
+            # ✅ FIX: पहले यहाँ `hasattr(temp, "USER_SESSIONS")` guard था, और
+            # USER_SESSIONS temp class में declared नहीं था — यानी पहली बार कोई login
+            # करने से पहले यह पूरा ब्लॉक चुपचाप skip हो जाता था। अब temp में declared है।
+            now = time.time()
+            for session_data in temp.USER_SESSIONS.values():
+                if session_data.get("expiry", 0) > now:
+                    ram_users.add(session_data.get("tg_id"))
+
+            # 2. Database `web_users` कलेक्शन से पिछले 24 घंटे की लॉगिन हिस्ट्री चेक करें
+            # ✅ BUG FIX: पहले यहाँ naive datetime.now() इस्तेमाल होता था, जबकि
+            # 'last_login' (login_routes.py में) इसी फाइल के tz-aware get_local_now()
+            # से लिखा जाता है। MongoDB tz-aware datetime को असली UTC में convert करके
+            # स्टोर करता है, पर naive datetime को ज्यों-का-त्यों UTC मान लेता है —
+            # नतीजा IST में करीब साढ़े 5 घंटे का mismatch (गलत count) आता था।
+            # अब write और read दोनों जगह वही get_local_now() इस्तेमाल हो रहा है।
+            # This is a rolling 24-hour window, including across DST transitions.
+            today_start = get_local_now().astimezone(timezone.utc) - timedelta(days=1)
+            db_cursor = self.db["web_users"].find({"last_login": {"$gte": today_start}}, {"tg_id": 1})
+            async for user in db_cursor:
+                ram_users.add(user.get("tg_id"))
+
+            return len(ram_users)
+        except Exception as e:
+            logger.error(f"Error counting logged in users: {e}")
+            return 0
+
+    async def get_premium_users_count(self):
+        """डेटाबेस में कुल एक्टिव प्रीमियम यूज़र्स की सटीक संख्या देता है"""
+        try:
+            return await self.premium.count_documents({"status.premium": True})
+        except Exception as e:
+            logger.error(f"Error counting premium users: {e}")
+            return 0
+
+# =========================================
+# 🚀 INITIALIZE DATABASES
+# =========================================
+db = Database()
+web_db = WebAuthDB(db.db)
