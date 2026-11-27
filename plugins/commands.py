@@ -525,18 +525,14 @@ async def ui_cb(client, query):
         text = script.START_TXT.format(query.from_user.mention, get_wish())
         btn = [
             [ui_button("🍿 Open Mini App", web_app=WebAppInfo(url=MINI_APP_URL))],
-            [ui_button("+ Add to Group +", url=f"https://t.me/{temp.U_NAME}?startgroup=start")],
             [ui_button("👨‍🚒 Help Menu", callback_data="help"), ui_button("📊 Global Stats", callback_data="stats")]
         ]
 
         buttons_markup = ui_keyboard(btn)
 
     elif data == "help":
-        text = script.HELP_TXT.format(query.from_user.mention)
-        btn = [[ui_button("👨‍💻 User Commands", callback_data="user_cmds")]]
-        if query.from_user.id in ADMINS:
-            btn[0].append(ui_button("👮‍♂️ Admin Commands", callback_data="admin_cmds"))
-        btn.append([ui_button("⬅️ Back Menu", callback_data="back_start")])
+        text = script.ADMIN_COMMAND_TXT
+        btn = [[ui_button("⬅️ Back Menu", callback_data="back_start")]]
         buttons_markup = ui_keyboard(btn)
 
     elif data == "user_cmds":

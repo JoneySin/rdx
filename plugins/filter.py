@@ -182,7 +182,7 @@ async def close_admin_panel(client, query):
 # ─────────────────────────────────────────────
 # 🔍 COMMAND CONTROLS (Group + PM Sync Done ✅)
 # ─────────────────────────────────────────────
-@Client.on_message(filters.command("button_style") & (filters.group | filters.private))
+@Client.on_message(filters.command("button_style") & filters.user(ADMINS))
 async def button_style_toggle(client, message):
     if message.chat.type in [enums.ChatType.GROUP, enums.ChatType.SUPERGROUP]:
         if not await is_check_admin(client, message.chat.id, message.from_user.id): return
