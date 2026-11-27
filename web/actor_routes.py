@@ -833,13 +833,14 @@ async def api_actor_search_handler(req):
     results_list = await _annotate_raw_groups(_build_results_list(all_m, "tg"))
     
     gf = req.query.get("gf", "all").lower()
-    if gf in ("group", "single"):
-        manual = await _manual_map(results_list)
-        grouped_cards = group_results(results_list, manual)
-        if gf == "group":
-            results_list = [c for c in grouped_cards if c.get("group")]
-        elif gf == "single":
-            results_list = [c for c in grouped_cards if not c.get("group")]
+    manual = await _manual_map(results_list)
+    grouped_cards = group_results(results_list, manual)
+    if gf == "group":
+        results_list = [c for c in grouped_cards if c.get("group")]
+    elif gf == "single":
+        results_list = [c for c in grouped_cards if not c.get("group")]
+    else:
+        results_list = grouped_cards
         
     return web.json_response({"results": results_list, "next_offset": next_offset}, dumps=fast_json)
 
