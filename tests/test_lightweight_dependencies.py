@@ -13,8 +13,6 @@ for key, value in {
     }.items():
     os.environ.setdefault(key, value)
 
-import png
-import qrcode
 from database import users_chats_db
 import utils
 

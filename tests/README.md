@@ -146,7 +146,7 @@ approval fails closed and logs the error. Records approved before this mechanism
 was deployed do not have a decision marker; check their plan before acting on an
 old or stale receipt. Purchase-conversation locking is per running bot instance.
 
-Payment QR images use qrcode with its PyPNG backend, not Pillow. Timezone handling
+Timezone handling
 uses Python `zoneinfo`: the Docker image installs system tzdata, and the Python
 requirements install `tzdata` on Windows. Other environments without a system
 IANA timezone database must install the `tzdata` package separately. Auto-delete
