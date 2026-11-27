@@ -1,8 +1,8 @@
 """Signed (HMAC) stream links.
 
 /watch/<id> aur /download/<id> ab sirf wahi link kholte hain jisme valid
-`e` (expiry) aur `s` (signature) ho. Login ya premium check KHOLNE wale par
-nahi hota -> premium user ka /link wala public link koi bhi khol sakta hai,
+`e` (expiry) aur `s` (signature) ho. Login check KHOLNE wale par
+nahi hota -> /link wala public link koi bhi khol sakta hai,
 par message-id guess karke files nahi nikaal sakta.
 
 Secret: env STREAM_SECRET (recommended). Nahi hai to BOT_TOKEN se derive hota hai.
@@ -21,7 +21,7 @@ _SECRET = hashlib.sha256(
 ).digest()
 
 # ── Link validity (seconds) ──────────────────────────────────────────
-USER_LINK_TTL = 24 * 3600         # premium user ke /link ki validity (1 din)
+USER_LINK_TTL = 24 * 3600         # user /link validity (1 din)
 STREAM_TTL = 6 * 3600             # search/dashboard "Stream" button ke links
 MAX_ADMIN_TTL = 365 * 24 * 3600   # admin ke custom /link ki max limit
 

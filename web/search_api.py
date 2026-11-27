@@ -353,8 +353,7 @@ def verify_telegram_init_data(init_data: str) -> dict | None:
 
 
 # ✅ SYNC FIX: यह छोटा helper दोनों branches (init_data + cookie) में एक जैसा
-# admin/premium/IS_PREMIUM-fallback logic apply करता है, ताकि दोनों branch में
-# rule अलग-अलग न हो जाए (पहले cookie-branch में IS_PREMIUM fallback मिसिंग था)।
+# admin role resolve करता है
 async def _resolve_role_for_tg(tg_id):
     if tg_id in ADMINS: return "admin"
     return None
@@ -373,8 +372,7 @@ async def get_user_role(req):
 
     # ✅ DUPLICATION FIX: cookie/session पढ़ने वाला logic अब web_assets.get_auth() से
     # ही आता है (वही function जो /dashboard, /actors, /posts पेज इस्तेमाल करते हैं),
-    # यहाँ दोबारा वही कोड नहीं लिखा गया। सिर्फ premium resolution अलग से जोड़ी गई है
-    # क्योंकि API endpoints को JSON 403 चाहिए, redirect नहीं।
+    # API endpoints access resolution
     role, tg_id = await web_get_auth(req)
     if not role or role != "admin":
         return None, None

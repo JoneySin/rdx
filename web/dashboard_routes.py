@@ -1095,25 +1095,7 @@ async def logout(req):
 
 @dashboard_routes.get('/premium_expired')
 async def premium_expired(req):
-    role, tg_id = await get_auth(req)
-    if not role:
-        return web.HTTPFound('/login')
-    content = (
-        '<div style="text-align:center;">'
-        '<div style="font-size:48px;margin-bottom:14px;">&#9203;</div>'
-        '<p style="color:var(--muted);margin-bottom:26px;font-size:14px;line-height:1.6;">Your access to <b>RdxTv Web</b> has expired. '
-        'Renew your VIP pass via the Telegram Bot to resume instant streaming.</p>'
-        '<div class="scard" style="text-align:left;margin-bottom:24px;padding:18px;">'
-        '<div class="scard-label" style="color:var(--accent-cyan);">How to Renew RdxTv VIP</div>'
-        '<div class="scard-sub" style="color:var(--text);margin-bottom:6px;">1. Open the RdxTv Telegram Bot</div>'
-        '<div class="scard-sub" style="color:var(--text);margin-bottom:6px;">2. Send the <b>/plan</b> command</div>'
-        '<div class="scard-sub" style="color:var(--text);">3. Activate instantly via UPI</div>'
-        '</div>'
-        f'<a href="https://t.me/{temp.U_NAME}" class="submit-btn" style="text-decoration:none;display:block;">Open RdxTv Bot &rarr;</a>'
-        '<a href="/logout" style="display:block;margin-top:20px;color:var(--muted);text-decoration:none;font-weight:600;">Sign Out</a>'
-        '</div>'
-    )
-    return build_page("VIP Expired - RdxTv", form_wrapper("VIP Pass Expired", content), "login-bg")
+    return web.HTTPFound('/login')
 
 
 # ✅ OPTIMIZATION 2: Koyeb Health Check Route

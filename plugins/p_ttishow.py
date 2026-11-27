@@ -8,7 +8,6 @@ from pyrogram.types import LinkPreviewOptions
 from info import ADMINS, LOG_CHANNEL, PICS, IS_PREMIUM
 from database.users_chats_db import db
 
-# ✅ FIX: is_premium को अब plugins.premium की जगह utils से इम्पोर्ट किया गया है
 from utils import temp, get_settings, is_rate_limited
 from Script import script
 
@@ -212,7 +211,7 @@ async def get_id(c, m):
          f"📩 <b>Msg ID:</b> <code>{m.id}</code>\n")
 
     if m.chat.type in (enums.ChatType.GROUP, enums.ChatType.SUPERGROUP):
-        t += f"Status: <code>Active Premium Group</code>\n📛 <b>Title:</b> {m.chat.title}\n🔗 <b>Link:</b> @{m.chat.username or 'Private'}\n"
+        t += f"Status: <code>Active Group</code>\n📛 <b>Title:</b> {m.chat.title}\n🔗 <b>Link:</b> @{m.chat.username or 'Private'}\n"
 
     if r:
         f_id, _ = get_media_file_id(r)

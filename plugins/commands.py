@@ -190,7 +190,7 @@ async def start(client, message):
             )
         return
 
-    if len(message.command) > 1 and message.command[1] != "premium":
+    if len(message.command) > 1:
         try:
             parts = message.command[1].split("_")
             if len(parts) >= 3:
@@ -471,7 +471,7 @@ async def link_generator(client, message):
     if not media:
         return await message.reply("❌ **No streamable media found in the replied message.**")
 
-    # ⏳ Link validity: premium user = fixed 1 din | admin = /link 12h, /link 3d, /link 0 (kabhi nahi)
+    # ⏳ Link validity: user = fixed 1 din | admin = /link 12h, /link 3d, /link 0 (kabhi nahi)
     ttl = USER_LINK_TTL
     if message.from_user.id in ADMINS and len(message.command) > 1:
         arg = message.command[1].lower()

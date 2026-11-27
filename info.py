@@ -12,7 +12,6 @@ if _missing_env:
     logger.error("❌ Missing required environment variable(s): %s", ", ".join(_missing_env))
     exit(1)
 
-# Needed for the self-service premium purchase flow, not for bot startup.
 PAYMENT_ENV = ("UPI_ID", "UPI_NAME", "RECEIPT_SEND_USERNAME")
 
 # ─────────────────────────────────────────────
@@ -138,7 +137,6 @@ MAX_WEB_RESULTS = int(environ.get("MAX_WEB_RESULTS", 21))
 # ⏳ TIMERS ENGINE (सेंट्रलाइज्ड कस्टमाइजेबल टाइमर्स)
 # ─────────────────────────────────────────────
 PM_FILE_DELETE_TIME = int(environ.get("PM_FILE_DELETE_TIME", 600)) 
-PREMIUM_REMINDER_BUSY_GAP = int(environ.get("PREMIUM_REMINDER_BUSY_GAP", 60)) 
 
 # ─────────────────────────────────────────────
 # ⚡ SPEED, BUFFER & ANTI-SPAM THRU LMT
@@ -192,7 +190,6 @@ else:
         exit(1)
 
 # ─────────────────────────────────────────────
-# 💎 PREMIUM PAYMENT CONFIGURATIONS
 # ─────────────────────────────────────────────
 # Space- or comma-separated Telegram reaction emojis; empty disables them.
 REACTIONS = parse_reactions()
@@ -205,4 +202,3 @@ RECEIPT_SEND_USERNAME = environ.get("RECEIPT_SEND_USERNAME", "").strip()
 if RECEIPT_SEND_USERNAME and not RECEIPT_SEND_USERNAME.startswith("@") and not RECEIPT_SEND_USERNAME.isnumeric():
     RECEIPT_SEND_USERNAME = "@" + RECEIPT_SEND_USERNAME
 
-# Self-service premium disabled in Admin-Only mode

@@ -451,7 +451,7 @@ async def single_post_display(req):
     tags_html = "".join([f'<span style="background:var(--bg3); border:1px solid var(--border); color:var(--muted); font-size:11.5px; padding:5px 12px; border-radius:999px; font-weight:700;">#{html.escape(t)}</span>' for t in post.get("tags", [])])
     tags_div = f'<div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; margin-bottom:14px;">{cat_html}{tags_html}</div>' if (tags_html or cat_html) else ""
     
-    # 🍿 Premium Netflix Style Episodes Layout
+    # 🍿 Netflix Style Episodes Layout
     video_buttons = ""
     videos = post.get("videos", [])
     if not videos:

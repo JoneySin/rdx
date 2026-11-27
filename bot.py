@@ -137,7 +137,6 @@ class Bot(Client):
             session_string=SESSION_STRING or None,
         )
         self._runner = None 
-        self._premium_task = None 
         self._delete_task = None  
 
     async def _start_web(self):
@@ -248,7 +247,7 @@ class Bot(Client):
                 raise StopPropagation
         
         self.add_handler(MessageHandler(ban_check_middleware), group=-1)
-        logger.info("🛡️ Premium Global Security Guard Activated")
+        logger.info("🛡️ Global Security Guard Activated")
 
         # 5. Persistent Hard Restart Logic Sync
         local_tz = ZoneInfo(TIME_ZONE)
@@ -296,9 +295,7 @@ class Bot(Client):
         else:
             logger.info("🗂️ Startup group scan disabled (set STARTUP_GROUP_SCAN=true to enable)")
 
-        # 8. Start Background Automation Tasks (Premium Engine & Auto-Delete Sync)
-        # check_premium_expired removed in Admin-Only mode
-        pass
+        # 8. Start Background Automation Tasks (Auto-Delete Sync)
         self._delete_task = asyncio.create_task(auto_delete_worker(self)) 
         logger.info("⏳ Persistent Auto-Delete RAM Guard Activated")
 
@@ -340,11 +337,6 @@ class Bot(Client):
 
         await stop_group_scan()
 
-        if getattr(self, '_premium_task', None):
-            self._premium_task.cancel()
-            try: await self._premium_task 
-            except asyncio.CancelledError: pass
-            logger.info("✅ Premium Expiry Engine Stopped")
 
         if getattr(self, '_delete_task', None):
             self._delete_task.cancel()

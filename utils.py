@@ -8,8 +8,6 @@ from pyrogram import enums
 from pyrogram.errors import FloodWait
 
 from info import ADMINS, IS_PREMIUM, TIME_ZONE
-# ✅ DRY: premium plan का reset-state dict database layer से ही आता है (एक ही जगह
-# define है), ताकि utils/premium/users_chats_db तीनों में वही 11 keys रहें।
 from database.users_chats_db import db, DEFAULT_PLAN_STATUS as RESET_PLAN_STATUS
 
 logger = logging.getLogger(__name__)
@@ -119,8 +117,6 @@ def get_local_now():
     tz = ZoneInfo(TIME_ZONE)
     return datetime.now(tz).replace(tzinfo=None)
 
-# ─────────────────────────────────────────────
-# 💎 PREMIUM AUTO-VALIDATOR (Perfect info.py TIME_ZONE Sync)
 # ─────────────────────────────────────────────
 async def is_premium(user_id, bot=None):
     return user_id in ADMINS

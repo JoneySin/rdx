@@ -203,7 +203,7 @@ async def search_toggle(client, message):
     await message.reply(f"✅ Search is now **{'ENABLED' if state else 'DISABLED'}**")
 
 # ─────────────────────────────────────────────
-# 🔒 STRICT PREMIUM GATE PASSENGERS
+# 🔒 BOT SEARCH GATEWAY
 # ─────────────────────────────────────────────
 @Client.on_message(filters.private & filters.text & filters.incoming)
 async def pm_search(client, message):
@@ -237,7 +237,7 @@ async def group_search(client, message):
             if not await is_check_admin(client, chat_id, user_id):
                 try: await message.delete()
                 except: pass
-                msg = await message.reply("❌ External Links not allowed in Premium Group!")
+                msg = await message.reply("❌ External Links not allowed in this Group!")
                 await asyncio.sleep(5)
                 try: await msg.delete()
                 except: pass
@@ -396,7 +396,7 @@ async def spell_check_handler(client, query):
         suggestion = suggestions[int(idx)]
 
         if IS_PREMIUM and query.from_user.id not in ADMINS and not await is_premium(query.from_user.id, client):
-            return await query.answer("❌ Premium Expired!", show_alert=True)
+            return await query.answer("❌ Admin access required!", show_alert=True)
         await query.answer("🔍 Searching...", show_alert=False)
         answered = True
         counts_out = {}
@@ -437,7 +437,7 @@ async def pagination_handler(client, query):
     except: return await query.answer("❌ Error!", show_alert=True)
 
     if IS_PREMIUM and query.from_user.id not in ADMINS and not await is_premium(query.from_user.id, client): 
-        return await query.answer("❌ Premium Expired!", show_alert=True)
+        return await query.answer("❌ Admin access required!", show_alert=True)
 
     entry = BUTTONS.get(key)
     if not entry: return await query.answer("❌ Search Expired!", show_alert=True)
