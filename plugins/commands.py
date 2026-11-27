@@ -457,10 +457,8 @@ async def delete_all_cmd(client, message):
 # ─────────────────────────────────────────────
 # 🔗 LINK GENERATOR (Stream Routing Tunnel)
 # ─────────────────────────────────────────────
-@Client.on_message(filters.command("link"))
+@Client.on_message(filters.command("link") & filters.user(ADMINS))
 async def link_generator(client, message):
-    if message.from_user.id not in ADMINS:
-        return await message.reply("🔒 <b>Access Denied:</b> This command is restricted to Bot Admins only.")
 
     media = (
         getattr(message.reply_to_message, 'document', None) or
