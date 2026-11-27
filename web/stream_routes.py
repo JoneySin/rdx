@@ -31,62 +31,117 @@ async def root_route_handler(request):
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fast Finder — Movies, Series & More</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;900&display=swap" rel="stylesheet">
+<title>RdxTv — Next-Gen Cloud Cinema & Series</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#000;--text:#fff;--box:rgba(0,0,0,.7);--tag-bg:rgba(51,51,51,.8);--red:#E50914;--red-hover:#b30710}
-html.light{--bg:#f3f3f3;--text:#141414;--box:#fff;--tag-bg:#e6e6e6}
+:root{
+  --bg:#050914;
+  --surface:rgba(12,21,44,.78);
+  --surface-strong:rgba(16,28,58,.92);
+  --border:rgba(99,102,241,.26);
+  --text:#f1f5f9;
+  --muted:#94a8cd;
+  --accent:#6366f1;
+  --cyan:#06b6d4;
+  --grad:linear-gradient(135deg,#6366f1 0%,#06b6d4 100%);
+  --glow:rgba(6,182,212,.28);
+}
+html.light{
+  --bg:#eff4fc;
+  --surface:rgba(255,255,255,.86);
+  --surface-strong:#ffffff;
+  --border:#cbd8ef;
+  --text:#0b132b;
+  --muted:#52658a;
+  --accent:#4f46e5;
+  --cyan:#0284c7;
+  --grad:linear-gradient(135deg,#4f46e5 0%,#0284c7 100%);
+  --glow:rgba(79,70,229,.20);
+}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;transition:background 0.3s, color 0.3s}
-.hero-bg{position:fixed;inset:0;background:linear-gradient(to top,var(--bg) 0,rgba(0,0,0,.4) 50%,rgba(0,0,0,.8) 100%),url('https://assets.nflxext.com/ffe/siteui/vlv3/f841d4c7-10e1-40af-bcae-07a3f8dc141a/f6d7434e-d6de-4185-a6d4-c77a2d08737b/IN-en-20220502-popsignuptwoweeks-perspective_alpha_website_medium.jpg') center/cover;z-index:-1;transition:all 0.3s}
-html.light .hero-bg{background:linear-gradient(to top,var(--bg) 0,rgba(255,255,255,.6) 50%,rgba(255,255,255,.9) 100%),url('https://assets.nflxext.com/ffe/siteui/vlv3/f841d4c7-10e1-40af-bcae-07a3f8dc141a/f6d7434e-d6de-4185-a6d4-c77a2d08737b/IN-en-20220502-popsignuptwoweeks-perspective_alpha_website_medium.jpg') center/cover}
-.navbar{display:flex;justify-content:space-between;align-items:center;padding:25px 5%;z-index:10}
-.logo{font-size:28px;font-weight:900;color:var(--red);text-decoration:none;display:flex;align-items:center;gap:8px;letter-spacing:1px;text-transform:uppercase}
-.header-actions{display:flex;align-items:center;gap:12px}
-.theme-btn{background:transparent;border:1px solid var(--text);color:var(--text);padding:8px 16px;border-radius:4px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:14px;cursor:pointer;transition:.2s}
-.theme-btn:hover{background:var(--text);color:var(--bg)}
-.admin-btn{background:var(--red);color:#fff;text-decoration:none;padding:8px 16px;border-radius:4px;font-weight:700;font-size:14px;transition:.2s;border:1px solid var(--red)}
-.admin-btn:hover{background:var(--red-hover);border-color:var(--red-hover)}
-.hero-content{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:20px;z-index:10;max-width:800px;margin:0 auto}
-.hero-title{font-size:4rem;font-weight:900;margin-bottom:15px;line-height:1.1}
-.hero-sub{font-size:1.5rem;font-weight:500;margin-bottom:30px}
-.search-container{display:flex;width:100%;max-width:650px;flex-direction:row}
-.search-input{flex:1;padding:20px 25px;font-size:1.2rem;border:1px solid #808080;border-radius:4px 0 0 4px;background:var(--box);color:var(--text);outline:none;transition:.2s}
-.search-input:focus{border-color:var(--text)}
-.search-btn{background:var(--red);color:#fff;border:none;padding:0 35px;font-size:1.5rem;font-weight:700;border-radius:0 4px 4px 0;cursor:pointer;display:flex;align-items:center;gap:10px;transition:.2s}
-.search-btn:hover{background:var(--red-hover)}
-.quick-picks{margin-top:40px;display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
-.qp-title{width:100%;font-size:1rem;color:var(--text);opacity:0.7;margin-bottom:10px;font-weight:500;text-transform:uppercase;letter-spacing:1px}
-.tag{background:var(--tag-bg);border:1px solid var(--text);padding:8px 18px;border-radius:50px;font-size:14px;font-weight:700;cursor:pointer;transition:.2s}
-.tag:hover{background:var(--text);color:var(--bg)}
-@media (max-width:600px){.hero-title{font-size:2.5rem}.hero-sub{font-size:1.2rem}.search-container{flex-direction:column;gap:10px}.search-input{border-radius:4px;border:1px solid #808080;padding:15px}.search-btn{border-radius:4px;padding:15px;justify-content:center;font-size:1.2rem}.logo{font-size:20px}.theme-btn, .admin-btn{padding:6px 12px;font-size:12px;}}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden;transition:background .25s,color .25s}
+.hero-bg{
+  position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-color:var(--bg);
+  background-image:
+    radial-gradient(circle at 18% 15%,rgba(99,102,241,.32) 0%,transparent 45%),
+    radial-gradient(circle at 84% 18%,rgba(6,182,212,.26) 0%,transparent 44%),
+    radial-gradient(circle at 50% 88%,rgba(168,85,247,.18) 0%,transparent 52%),
+    linear-gradient(rgba(148,168,205,.05) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(148,168,205,.05) 1px,transparent 1px);
+  background-size:100% 100%,100% 100%,100% 100%,42px 42px,42px 42px;
+}
+html.light .hero-bg{
+  background-image:
+    radial-gradient(circle at 18% 15%,rgba(79,70,229,.15) 0%,transparent 45%),
+    radial-gradient(circle at 84% 18%,rgba(2,132,199,.14) 0%,transparent 44%),
+    linear-gradient(rgba(15,23,42,.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(15,23,42,.04) 1px,transparent 1px);
+  background-size:100% 100%,100% 100%,42px 42px,42px 42px;
+}
+.navbar{display:flex;justify-content:space-between;align-items:center;padding:20px 5%;z-index:10;border-bottom:1px solid rgba(148,168,205,.12);backdrop-filter:blur(16px);background:rgba(5,9,20,.45)}
+html.light .navbar{background:rgba(255,255,255,.68);border-bottom-color:var(--border)}
+.logo{font-size:26px;font-weight:900;color:var(--text);text-decoration:none;display:flex;align-items:center;gap:9px;letter-spacing:.4px}
+.header-actions{display:flex;align-items:center;gap:10px}
+.theme-btn{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:8px 16px;border-radius:999px;font-family:inherit;font-weight:700;font-size:13px;cursor:pointer;transition:.2s;backdrop-filter:blur(10px)}
+.theme-btn:hover{border-color:var(--cyan);transform:translateY(-1px)}
+.admin-btn{background:var(--grad);color:#fff;text-decoration:none;padding:9px 20px;border-radius:999px;font-weight:800;font-size:13px;transition:.2s;box-shadow:0 6px 20px var(--glow)}
+.admin-btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.hero-content{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:48px 20px 56px;z-index:10;max-width:960px;margin:0 auto;width:100%}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:999px;background:rgba(6,182,212,.12);border:1px solid rgba(6,182,212,.32);color:var(--cyan);font-size:11.5px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;margin-bottom:22px}
+.hero-title{font-family:'Outfit','Plus Jakarta Sans',sans-serif;font-size:clamp(2.35rem,6vw,4.35rem);font-weight:900;margin-bottom:16px;line-height:1.08;letter-spacing:-1.2px}
+.hero-title .grad-txt{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero-sub{font-size:clamp(1.02rem,2.2vw,1.28rem);color:var(--muted);font-weight:500;margin-bottom:34px;max-width:640px;line-height:1.6}
+.search-container{display:flex;width:100%;max-width:680px;padding:7px;border-radius:18px;background:var(--surface);border:1px solid var(--border);backdrop-filter:blur(20px);box-shadow:0 20px 55px rgba(2,6,23,.42);gap:8px}
+html.light .search-container{box-shadow:0 16px 42px rgba(15,23,42,.09)}
+.search-input{flex:1;padding:15px 18px;font-family:inherit;font-size:1.05rem;font-weight:600;border:none;border-radius:12px;background:transparent;color:var(--text);outline:none;min-width:0}
+.search-input::placeholder{color:var(--muted);font-weight:500}
+.search-btn{background:var(--grad);color:#fff;border:none;padding:0 28px;font-family:'Outfit','Plus Jakarta Sans',sans-serif;font-size:1.05rem;font-weight:800;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:.2s;box-shadow:0 8px 22px var(--glow);white-space:nowrap}
+.search-btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.quick-picks{margin-top:28px;display:flex;flex-wrap:wrap;justify-content:center;gap:9px}
+.qp-title{width:100%;font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:800;text-transform:uppercase;letter-spacing:1.6px}
+.tag{background:var(--surface);border:1px solid var(--border);padding:7px 16px;border-radius:999px;font-size:13px;font-weight:700;cursor:pointer;transition:.2s;backdrop-filter:blur(10px)}
+.tag:hover{border-color:var(--cyan);color:var(--cyan);transform:translateY(-2px)}
+.feature-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;width:100%;margin-top:48px;text-align:left}
+.feat-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:20px;backdrop-filter:blur(14px);transition:transform .22s,border-color .22s}
+.feat-card:hover{transform:translateY(-4px);border-color:var(--cyan)}
+.feat-icon{display:inline-grid;place-items:center;width:38px;height:38px;border-radius:11px;background:rgba(99,102,241,.16);border:1px solid rgba(99,102,241,.3);font-size:18px;margin-bottom:12px}
+.feat-card h3{font-family:'Outfit','Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:800;margin-bottom:5px}
+.feat-card p{font-size:13px;color:var(--muted);line-height:1.5}
+@media (max-width:760px){.feature-strip{grid-template-columns:1fr;gap:12px;margin-top:36px}}
+@media (max-width:600px){
+  .navbar{padding:14px 4%}
+  .search-container{flex-direction:column;padding:10px;border-radius:16px}
+  .search-input{padding:12px 14px;background:var(--surface-strong)}
+  .search-btn{padding:14px;width:100%}
+  .logo{font-size:20px}
+  .theme-btn,.admin-btn{padding:6px 12px;font-size:12px}
+}
 __BRAND_CSS__
 </style>
 </head>
 <body>
 <div class="hero-bg"></div>
 <header class="navbar">
-    <a href="/" class="logo landing-brand" aria-label="FastFinder home">__BRAND_MARKUP__</a>
+    <a href="/" class="logo landing-brand" aria-label="RdxTv home">__BRAND_MARKUP__</a>
     <div class="header-actions">
-        <button class="theme-btn" id="theme-btn">Theme</button>
+        <button class="theme-btn" id="theme-btn">🌗 Theme</button>
         <a href="/login" class="admin-btn">Sign In</a>
     </div>
 </header>
 <main class="hero-content">
-    <h1 class="hero-title">Unlimited movies, TV shows, and more.</h1>
-    <p class="hero-sub">Search and stream instantly via Telegram.</p>
-    <div class="search-container">
-        <input type="text" id="searchInput" class="search-input" placeholder="Search genres, qualities, formats..." autocomplete="off">
-        <button class="search-btn" onclick="startSearch()">Search ></button>
+    <h1 class="hero-title">Stream Movies &amp; Series<br><span class="grad-txt">on RdxTv</span></h1>
+    <div class="search-container" style="margin-top:20px;">
+        <input type="text" id="searchInput" class="search-input" placeholder="Search movies, web series, 4K UHD, anime..." autocomplete="off">
+        <button class="search-btn" onclick="startSearch()">Search &rarr;</button>
     </div>
     <div class="quick-picks">
-        <div class="qp-title">Trending Searches</div>
-        <span class="tag" onclick="fillAndSearch('Action')">Action</span>
-        <span class="tag" onclick="fillAndSearch('Comedy')">Comedy</span>
-        <span class="tag" onclick="fillAndSearch('Thriller')">Thriller</span>
-        <span class="tag" onclick="fillAndSearch('Anime')">Anime</span>
-        <span class="tag" onclick="fillAndSearch('4K')">4K UHD</span>
-        <span class="tag" onclick="fillAndSearch('Sci-Fi')">Sci-Fi</span>
+        <span class="tag" onclick="fillAndSearch('Action')">🔥 Action</span>
+        <span class="tag" onclick="fillAndSearch('Web Series')">📺 Web Series</span>
+        <span class="tag" onclick="fillAndSearch('Thriller')">🕵️ Thriller</span>
+        <span class="tag" onclick="fillAndSearch('Anime')">🎌 Anime</span>
+        <span class="tag" onclick="fillAndSearch('4K')">💎 4K UHD</span>
+        <span class="tag" onclick="fillAndSearch('Sci-Fi')">🚀 Sci-Fi</span>
     </div>
 </main>
 <script>

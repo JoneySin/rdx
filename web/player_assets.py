@@ -1,45 +1,50 @@
-"""Small same-page player shared by the dashboard, profiles and posts."""
+"""Small same-page RdxTv Aurora player shared by the dashboard, profiles, recycle bin, and posts."""
 
 PLAYER_UI = r'''
 <style>
-.inline-player-backdrop{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.76);backdrop-filter:blur(8px)}
+.inline-player-backdrop{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(3,7,18,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
 .inline-player-backdrop[hidden]{display:none}
-.inline-player-card{width:min(100%,680px);max-height:calc(100dvh - 36px);overflow:auto;background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:0 24px 80px rgba(0,0,0,.6)}
-.inline-player-head{display:flex;align-items:center;gap:12px;padding:15px 17px}
-.inline-player-mark{display:grid;place-items:center;width:38px;height:38px;flex:none;color:white;background:var(--accent);border-radius:10px;font-size:17px}
-.inline-player-titlebox{flex:1;min-width:0}.inline-player-kicker{color:var(--muted);font-size:10px;letter-spacing:1px;text-transform:uppercase;font-weight:800}
-.inline-player-title{color:var(--text);font-size:14px;font-weight:800;line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:3px}
-.inline-player-close{width:36px;height:36px;flex:none;border:1px solid var(--border);border-radius:9px;color:var(--text);background:var(--bg3);font-size:23px;cursor:pointer}
-.inline-player-screen{background:#000;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;position:relative}
-.inline-player-screen video{width:100%;height:100%;max-height:56vh;object-fit:contain;background:#000}
-.inline-player-status{padding:11px 17px;color:var(--muted);font-size:12px;line-height:1.5;min-height:40px}
-.inline-player-status.error{color:#ffb4a9}.inline-player-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 17px 16px;flex-wrap:wrap}
-.inline-player-note{color:var(--muted);font-size:11px}.inline-player-download{color:var(--text);text-decoration:none;border:1px solid var(--border);background:var(--bg3);padding:8px 11px;border-radius:8px;font-size:12px;font-weight:700}
-.inline-player-download[hidden]{display:none}.inline-player-download:hover{border-color:var(--accent)}
-.inline-player-switcher{padding:12px 17px 0;border-top:1px solid var(--border)}
+.inline-player-card{width:min(100%,720px);max-height:calc(100dvh - 36px);overflow:auto;background:var(--card);border:1px solid var(--border);border-radius:20px;box-shadow:0 28px 90px rgba(2,6,23,.72),0 0 0 1px rgba(99,102,241,.16)}
+.inline-player-head{display:flex;align-items:center;gap:12px;padding:15px 18px;background:linear-gradient(180deg,rgba(99,102,241,.08),transparent);border-bottom:1px solid var(--border)}
+.inline-player-mark{display:grid;place-items:center;width:38px;height:38px;flex:none;color:#fff;background:var(--accent-grad,linear-gradient(135deg,#6366f1 0%,#06b6d4 100%));border-radius:11px;font-size:16px;box-shadow:0 6px 18px var(--accent-glow,rgba(99,102,241,.32))}
+.inline-player-titlebox{flex:1;min-width:0}
+.inline-player-kicker{color:var(--accent-cyan,#06b6d4);font-size:10px;letter-spacing:1.3px;text-transform:uppercase;font-weight:800}
+.inline-player-title{color:var(--text);font-size:14.5px;font-weight:800;line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px}
+.inline-player-close{width:36px;height:36px;flex:none;border:1px solid var(--border);border-radius:10px;color:var(--muted);background:var(--bg3);font-size:21px;cursor:pointer;transition:border-color .18s,color .18s,background .18s}
+.inline-player-close:hover{border-color:#f43f5e;color:#fb7185;background:rgba(244,63,94,.1)}
+.inline-player-screen{background:#020617;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;position:relative}
+.inline-player-screen video{width:100%;height:100%;max-height:58vh;object-fit:contain;background:#020617}
+.inline-player-switcher{padding:13px 18px 2px;border-top:1px solid var(--border);background:var(--bg2)}
 .inline-player-switcher[hidden]{display:none}
-.inline-player-switch-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;color:var(--muted);font-size:10px;letter-spacing:1px;text-transform:uppercase;font-weight:800;margin-bottom:8px}
+.inline-player-switch-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;color:var(--muted);font-size:10px;letter-spacing:1.1px;text-transform:uppercase;font-weight:800;margin-bottom:8px}
 .inline-player-switch-head span:last-child{letter-spacing:0;text-transform:none;font-weight:600;font-size:11px}
-.inline-player-switch-row{display:flex;gap:7px;overflow-x:auto;padding-bottom:5px;scrollbar-width:thin}
-.inline-player-chip{flex:none;border:1px solid var(--border);background:var(--bg3);color:var(--text);padding:7px 11px;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;line-height:1.25;text-align:center}
-.inline-player-chip:hover{border-color:var(--accent)}
-.inline-player-chip[aria-current="true"]{background:var(--accent);border-color:var(--accent);color:#fff;cursor:default}
-.inline-player-chip[aria-current="true"]:hover{border-color:var(--accent)}
-.inline-player-chip small{display:block;font-size:9px;font-weight:600;opacity:.75;margin-top:2px}
+.inline-player-switch-row{display:flex;gap:7px;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin}
+.inline-player-chip{flex:none;border:1px solid var(--border);background:var(--bg3);color:var(--text);padding:7px 12px;border-radius:999px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;line-height:1.25;text-align:center;transition:border-color .16s,background .16s,box-shadow .16s}
+.inline-player-chip:hover{border-color:var(--accent-cyan,#06b6d4)}
+.inline-player-chip[aria-current="true"]{background:var(--accent-grad,linear-gradient(135deg,#6366f1 0%,#06b6d4 100%));border-color:transparent;color:#fff;box-shadow:0 4px 14px var(--accent-glow,rgba(99,102,241,.28));cursor:default}
+.inline-player-chip[aria-current="true"]:hover{border-color:transparent}
+.inline-player-chip small{display:block;font-size:9px;font-weight:600;opacity:.82;margin-top:2px}
 .inline-player-switch-note{color:var(--muted);font-size:10px;margin-top:5px}
-@media(max-width:500px){.inline-player-backdrop{padding:10px}.inline-player-card{border-radius:13px}.inline-player-head{padding:12px}.inline-player-screen video{max-height:50vh}}
+.inline-player-status{padding:11px 18px;color:var(--muted);font-size:12px;line-height:1.5;min-height:40px}
+.inline-player-status.error{color:#fb7185}
+.inline-player-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 18px 16px;flex-wrap:wrap}
+.inline-player-note{color:var(--muted);font-size:11px}
+.inline-player-download{color:#fff;text-decoration:none;border:0;background:var(--accent-grad,linear-gradient(135deg,#6366f1 0%,#06b6d4 100%));padding:9px 14px;border-radius:10px;font-size:12px;font-weight:800;box-shadow:0 6px 18px var(--accent-glow,rgba(99,102,241,.28));transition:filter .16s,transform .16s}
+.inline-player-download[hidden]{display:none}
+.inline-player-download:hover{filter:brightness(1.08);transform:translateY(-1px)}
+@media(max-width:500px){.inline-player-backdrop{padding:10px}.inline-player-card{border-radius:16px}.inline-player-head{padding:12px 14px}.inline-player-screen video{max-height:50vh}}
 </style>
 <div id="inlinePlayer" class="inline-player-backdrop" role="dialog" aria-modal="true" aria-labelledby="inlinePlayerTitle" hidden>
   <div class="inline-player-card">
     <div class="inline-player-head">
       <span class="inline-player-mark" aria-hidden="true">&#9654;</span>
-      <div class="inline-player-titlebox"><div class="inline-player-kicker">Now playing</div><div id="inlinePlayerTitle" class="inline-player-title"></div></div>
+      <div class="inline-player-titlebox"><div id="inlinePlayerTitle" class="inline-player-title"></div></div>
       <button type="button" class="inline-player-close" aria-label="Close player" onclick="closeInlinePlayer()">&times;</button>
     </div>
     <div class="inline-player-screen"><video id="inlinePlayerVideo" controls playsinline preload="metadata"></video></div>
     <div id="inlinePlayerSwitcher" class="inline-player-switcher" aria-label="Other versions in this group" hidden></div>
     <div id="inlinePlayerStatus" class="inline-player-status" role="status" aria-live="polite"></div>
-    <div class="inline-player-actions"><span class="inline-player-note">Playback depends on your browser's supported formats.</span><a id="inlinePlayerDownload" class="inline-player-download" hidden>Download file</a></div>
+    <div class="inline-player-actions"><a id="inlinePlayerDownload" class="inline-player-download" hidden>&#11015; Download</a></div>
   </div>
 </div>
 <script>
@@ -205,8 +210,6 @@ async function switchInlinePlayer(fileId,title,resetPosition){
         inlinePlayerPaintSwitches();
         video.pause();
         inlinePlayerDownloadLink(prepared.download);
-        // Resume at the same position when only the quality changes; an episode
-        // change starts from the beginning unless someone seeks.
         video.addEventListener('loadedmetadata',function(){
             if(request!==inlinePlayerRequest)return;
             if(resetPosition){video.currentTime=0;return;}

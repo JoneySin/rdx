@@ -10,14 +10,14 @@ const assert=require('node:assert/strict');
  await page.addInitScript(()=>{window.Telegram={WebApp:{expand(){},ready(){},initData:'fixture'}};window.Plyr=class {on(){}};});
  await page.goto(base+'/dashboard');await page.locator('.grp-card').first().waitFor();
  const logo=page.locator('.topbar .logo');
- assert.equal(await logo.getAttribute('aria-label'),'FastFinder home');
- assert.equal(await logo.locator('.brand-word').innerText(),'FAST FINDER');
- assert.equal(await logo.locator('.brand-mark').innerText(),'F');
+ assert.equal(await logo.getAttribute('aria-label'),'RdxTv home');
+ assert.equal(await logo.locator('.brand-word').innerText(),'RdxTv');
+ assert.equal(await logo.locator('.brand-mark').innerText(),'R');
  assert.equal(await logo.locator('.brand-mark svg').count(),0);
  const mark=await logo.locator('.brand-mark').innerHTML();
  for(const width of [320,768,1200]){
    await page.setViewportSize({width,height:800});
-   assert.equal(await logo.locator('.brand-word').evaluate(el=>getComputedStyle(el).fontSize),'18px');
+   assert.equal(await logo.locator('.brand-word').evaluate(el=>getComputedStyle(el).fontSize),'20px');
    assert.equal(await logo.locator('.brand-mark').evaluate(el=>getComputedStyle(el).fontSize),'18px');
    const box=await logo.boundingBox(),theme=await page.locator('.topbar .theme-btn').boundingBox();
    const word=await logo.locator('.brand-word').boundingBox();
@@ -27,7 +27,7 @@ const assert=require('node:assert/strict');
  }
  await page.setViewportSize({width:320,height:800});
  await page.locator('#hamBtn').click();
- const entries=[['/dashboard','🏠','Home'],['/posts','📝','Posts'],['/actors','🎭','Actors'],['/stats','📊','Database Stats'],['/profile','⚙️','Profile Settings']];
+ const entries=[['/dashboard','🏠','Home'],['/posts','🎬','Posts'],['/actors','🎭','Actors'],['/stats','🛰️','Database Stats'],['/profile','⚙️','Profile Settings']];
  for(const [href,icon,name] of entries){
    const link=page.locator(`.sb-link[href="${href}"]`);
    assert.equal(await link.locator('.sb-icon').textContent(),icon);
@@ -37,31 +37,31 @@ const assert=require('node:assert/strict');
  }
  assert.ok((await page.locator('.sb-link[href="/dashboard"]').getAttribute('class')).includes('active'));
  assert.ok((await page.locator('.sb-logout').innerText()).includes('🚪'));
- assert.equal(await page.locator('.sb-logo .brand-word').innerText(),'FAST FINDER');
- assert.equal(await page.locator('.sb-logo .brand-word').evaluate(el=>getComputedStyle(el).fontSize),'14px');
- assert.equal(await page.locator('.sb-logo .brand-mark').evaluate(el=>getComputedStyle(el).fontSize),'18px');
+ assert.equal(await page.locator('.sb-logo .brand-word').innerText(),'RdxTv');
+ assert.equal(await page.locator('.sb-logo .brand-word').evaluate(el=>getComputedStyle(el).fontSize),'17px');
+ assert.equal(await page.locator('.sb-logo .brand-mark').evaluate(el=>getComputedStyle(el).fontSize),'16px');
  await page.locator('#sbOverlay').click({position:{x:300,y:400}});
  const dark=await logo.locator('.brand-word').evaluate(el=>getComputedStyle(el).color);
  await page.locator('.theme-btn').click();
- const light=await logo.locator('.brand-word').evaluate(el=>getComputedStyle(el).color);assert.equal(dark,light); // Original red wordmark in both themes.
- assert.equal(await logo.locator('.brand-mark').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(229, 9, 20)');
- await page.screenshot({path:'/tmp/fastfinder-brand.png'});
- await page.goto(base+'/posts');assert.equal(await page.locator('.topbar .brand-word').innerText(),'FAST FINDER');
+ const light=await logo.locator('.brand-word').evaluate(el=>getComputedStyle(el).color);
+ assert.notEqual(dark,light);
+ assert.ok((await logo.locator('.brand-mark').evaluate(el=>getComputedStyle(el).backgroundImage)).includes('linear-gradient'));
+ await page.screenshot({path:'/tmp/rdxtv-brand.png'});
+ await page.goto(base+'/posts');assert.equal(await page.locator('.topbar .brand-word').innerText(),'RdxTv');
  await page.locator('#hamBtn').click();assert.ok((await page.locator('.sb-link[href="/posts"]').getAttribute('class')).includes('active'));
  await page.goto(base+'/fixture/user-dashboard');await page.locator('#hamBtn').click();assert.equal(await page.locator('.sb-link[href="/stats"]').count(),0);
- await page.goto(base+'/miniapp');assert.equal(await page.locator('.tb .brand-word').innerText(),'FAST FINDER');
+ await page.goto(base+'/miniapp');assert.equal(await page.locator('.tb .brand-word').innerText(),'RdxTv');
  assert.equal(await page.locator('.tb .brand-mark').innerHTML(),mark);
- assert.equal(await page.locator('.tb .brand-word').evaluate(el=>getComputedStyle(el).fontSize),'17px');
- assert.equal(await page.locator('.tb .brand-mark').evaluate(el=>getComputedStyle(el).fontSize),'16px');
- assert.equal(await page.locator('.tb .brand-mark').evaluate(el=>getComputedStyle(el).lineHeight),'22.4px');
+ assert.equal(await page.locator('.tb .brand-word').evaluate(el=>getComputedStyle(el).fontSize),'18px');
+ assert.equal(await page.locator('.tb .brand-mark').evaluate(el=>getComputedStyle(el).fontSize),'15px');
  await page.goto(base+'/fixture/guest');
  assert.equal(await page.locator('.guest-brand .brand-word').evaluate(el=>getComputedStyle(el).fontSize),'24px');
- assert.equal(await page.locator('.guest-brand .brand-mark').evaluate(el=>getComputedStyle(el).fontSize),'24px');
+ assert.equal(await page.locator('.guest-brand .brand-mark').evaluate(el=>getComputedStyle(el).fontSize),'22px');
  const guestWord=await page.locator('.guest-brand .brand-word').boundingBox(),guestTheme=await page.locator('.topbar .theme-btn').boundingBox();
  assert.ok(guestWord.x+guestWord.width<guestTheme.x,'guest header overlaps at 320px');
- await page.goto(base+'/fixture/landing');assert.equal(await page.locator('.navbar .brand-word').innerText(),'FAST FINDER');
+ await page.goto(base+'/fixture/landing');assert.equal(await page.locator('.navbar .brand-word').innerText(),'RdxTv');
  assert.equal(await page.locator('.navbar .brand-mark').innerHTML(),mark);
- for(const [width,wordSize,badgeSize] of [[320,'20px','18px'],[1200,'28px','24px']]){
+ for(const [width,wordSize,badgeSize] of [[320,'20px','18px'],[1200,'26px','22px']]){
    await page.setViewportSize({width,height:800});
    assert.equal(await page.locator('.landing-brand .brand-word').evaluate(el=>getComputedStyle(el).fontSize),wordSize);
    assert.equal(await page.locator('.landing-brand .brand-mark').evaluate(el=>getComputedStyle(el).fontSize),badgeSize);
@@ -70,14 +70,14 @@ const assert=require('node:assert/strict');
    assert.ok(actions.x+actions.width<=width,`landing header overflow at ${width}`);
  }
  await page.goto(base+'/fixture/watch');
- for(const [width,size] of [[320,'20px'],[1200,'24px']]){
+ for(const [width,wordSize,badgeSize] of [[320,'20px','18px'],[1200,'24px','22px']]){
    await page.setViewportSize({width,height:800});
-   await page.waitForFunction(expected=>getComputedStyle(document.querySelector('.watch-brand .brand-word')).fontSize===expected,size);
-   assert.equal(await page.locator('.watch-brand .brand-word').evaluate(el=>getComputedStyle(el).fontSize),size);
-   assert.equal(await page.locator('.watch-brand .brand-mark').evaluate(el=>getComputedStyle(el).fontSize),size);
+   await page.waitForFunction(expected=>getComputedStyle(document.querySelector('.watch-brand .brand-word')).fontSize===expected,wordSize);
+   assert.equal(await page.locator('.watch-brand .brand-word').evaluate(el=>getComputedStyle(el).fontSize),wordSize);
+   assert.equal(await page.locator('.watch-brand .brand-mark').evaluate(el=>getComputedStyle(el).fontSize),badgeSize);
    const word=await page.locator('.watch-brand .brand-word').boundingBox(),theme=await page.locator('.navbar .theme-btn').boundingBox();
    assert.ok(word.x+word.width<=theme.x,`watch header overlap at ${width}`);
  }
 
- assert.deepEqual(errors,[]);await browser.close();console.log('FastFinder brand and emoji navigation: roles, themes and mobile/desktop OK');
+ assert.deepEqual(errors,[]);await browser.close();console.log('RdxTv brand and navigation: roles, themes and mobile/desktop OK');
 })().catch(e=>{console.error(e);process.exit(1)});
