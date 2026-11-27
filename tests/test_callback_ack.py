@@ -13,8 +13,7 @@ for key, value in {
     'API_ID': '1', 'API_HASH': 'test', 'BOT_TOKEN': '1:test', 'ADMINS': '1',
     'LOG_CHANNEL': '-1001', 'BIN_CHANNEL': '-1002',
     'DATABASE_URL': 'mongodb://localhost:27017', 'URL': 'https://example.com',
-    'UPI_ID': 'test@upi', 'UPI_NAME': 'Test Merchant', 'RECEIPT_SEND_USERNAME': '@admin',
-}.items():
+    }.items():
     os.environ.setdefault(key, value)
 
 from plugins import commands
@@ -44,7 +43,7 @@ class CallbackAcknowledgementTests(unittest.IsolatedAsyncioTestCase):
             events.append('search')
             return [{'file_id': 'x', 'file_name': 'Film.mkv', 'file_size': 1}], '', 1, 'Primary'
 
-        with patch.object(bot_filter, 'IS_PREMIUM', False), \
+        with  \
                 patch.object(bot_filter, 'get_search_results', AsyncMock(side_effect=search)), \
                 patch.object(bot_filter, 'get_settings', AsyncMock(return_value={'simple_mode': True})), \
                 patch.object(bot_filter, 'get_filter_ui', return_value=('results', None)), \

@@ -15,8 +15,7 @@ for key, value in {
     "API_ID": "1", "API_HASH": "test", "BOT_TOKEN": "1:test", "ADMINS": "1",
     "LOG_CHANNEL": "-1001", "BIN_CHANNEL": "-1002",
     "DATABASE_URL": "mongodb://localhost:27017", "URL": "https://example.com",
-    "UPI_ID": "test@upi", "UPI_NAME": "Test Merchant", "RECEIPT_SEND_USERNAME": "@admin",
-}.items():
+    }.items():
     os.environ.setdefault(key, value)
 
 from aiohttp import web
@@ -737,7 +736,6 @@ class GroupingIntegrationTests(unittest.IsolatedAsyncioTestCase):
               patch.object(bot_module.db, "get_banned", AsyncMock(return_value=([], []))),
               patch.object(bot_module.web, "AppRunner", return_value=runner),
               patch.object(bot_module.web, "TCPSite", return_value=site),
-              patch.object(bot_module, "check_premium_expired", background),
               patch.object(bot_module, "auto_delete_worker", background),
               patch.object(bot_module, "ADMINS", []), patch.object(bot_module, "LOG_CHANNEL", None),
               patch.object(bot_module, "STARTUP_GROUP_SCAN", True),

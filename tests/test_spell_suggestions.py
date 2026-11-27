@@ -6,11 +6,10 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 for key, value in {
-    'API_ID': '1', 'API_HASH': 'test', 'BOT_TOKEN': '1:test', 'ADMINS': '1',
+    'API_ID': '1', 'API_HASH': 'test', 'BOT_TOKEN': '1:test', 'ADMINS': '1 5 6 55',
     'LOG_CHANNEL': '-1001', 'BIN_CHANNEL': '-1002',
     'DATABASE_URL': 'mongodb://localhost:27017', 'URL': 'https://example.com',
-    'UPI_ID': 'test@upi', 'UPI_NAME': 'Test Merchant', 'RECEIPT_SEND_USERNAME': '@admin',
-}.items():
+    }.items():
     os.environ.setdefault(key, value)
 
 from mongomock_motor import AsyncMongoMockClient
@@ -130,7 +129,7 @@ class BotSuggestionTests(unittest.IsolatedAsyncioTestCase):
             await bot_filter.spell_check_handler(None, query)
             self.assertIn('expired', query.answer.await_args.args[0])
         query.data = 'spellchk_5_-10099-77_0'
-        with patch.object(bot_filter, 'IS_PREMIUM', False), patch.object(bot_filter, 'get_search_results', AsyncMock(return_value=([], '', 0, 'None'))):
+        with  patch.object(bot_filter, 'get_search_results', AsyncMock(return_value=([], '', 0, 'None'))):
             await bot_filter.spell_check_handler(None, query)
         self.assertIn('no longer available', message.edit_text.await_args.args[0])
 
@@ -138,7 +137,7 @@ class BotSuggestionTests(unittest.IsolatedAsyncioTestCase):
         message = SimpleNamespace(chat=SimpleNamespace(id=123), id=77, edit_text=AsyncMock())
         bot_filter.SPELL_SUGGESTIONS['123-77'] = ['Hoot 2020.mkv']
         query = SimpleNamespace(data='spellchk_5_123-77_0', from_user=SimpleNamespace(id=5), message=message, answer=AsyncMock())
-        with patch.object(bot_filter, 'IS_PREMIUM', False), \
+        with  \
              patch.object(bot_filter, 'get_search_results', AsyncMock(side_effect=RuntimeError('offline'))), \
              self.assertLogs('plugins.filter', level='ERROR'):
             await bot_filter.spell_check_handler(None, query)
@@ -152,7 +151,7 @@ class BotSuggestionTests(unittest.IsolatedAsyncioTestCase):
         bot_filter.SPELL_SUGGESTIONS['123-77'] = [title]
         query = SimpleNamespace(data='spellchk_5_123-77_0', from_user=SimpleNamespace(id=5), message=message, answer=AsyncMock())
         files = [{'_id': 'file1', 'file_name': title, 'file_size': 100}]
-        with patch.object(bot_filter, 'IS_PREMIUM', False), \
+        with  \
              patch.object(bot_filter, 'get_search_results', AsyncMock(return_value=(files, '', 1, 'Primary'))) as search, \
              patch.object(bot_filter, 'get_settings', AsyncMock(return_value={'simple_mode': True})), \
              patch.object(bot_filter, 'get_filter_ui', return_value=('results', None)), \
@@ -225,7 +224,7 @@ class SearchEntryPointTests(unittest.IsolatedAsyncioTestCase):
         for chat_id, entry in ((55, bot_filter.pm_search), (-10055, bot_filter.group_search)):
             message = SimpleNamespace(text='Avngers', chat=SimpleNamespace(id=chat_id), from_user=SimpleNamespace(id=55))
             with patch.object(bot_filter, 'is_valid_search', AsyncMock(return_value=True)), \
-                 patch.object(bot_filter, 'is_premium', AsyncMock(return_value=True)), \
+ \
                  patch.object(bot_filter, 'get_settings', AsyncMock(return_value={'spell_check': True, 'search_enabled': True})), \
                  patch.object(bot_filter, 'auto_filter', AsyncMock()) as core:
                 await entry(client, message)

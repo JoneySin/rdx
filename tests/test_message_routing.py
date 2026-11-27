@@ -13,8 +13,7 @@ for key, value in {
     'API_ID': '1', 'API_HASH': 'test', 'BOT_TOKEN': '1:test', 'ADMINS': '1',
     'LOG_CHANNEL': '-1001', 'BIN_CHANNEL': '-1002',
     'DATABASE_URL': 'mongodb://localhost:27017', 'URL': 'https://example.com',
-    'UPI_ID': 'test@upi', 'UPI_NAME': 'Test Merchant', 'RECEIPT_SEND_USERNAME': '@admin',
-}.items():
+    }.items():
     os.environ.setdefault(key, value)
 
 from pyrogram import ContinuePropagation, enums
@@ -80,8 +79,8 @@ class AdminStartRoutingTests(unittest.IsolatedAsyncioTestCase):
             get_chat=AsyncMock(return_value=True),
         )
         with patch.object(commands, 'db', fake_db), \
-                patch.object(commands, 'REACTIONS', []), \
-                patch.object(commands, 'IS_PREMIUM', False):
+                patch.object(commands, 'REACTIONS', []):
+
             for handler in client.dispatcher.groups[0]:
                 if not isinstance(handler, MessageHandler):
                     continue

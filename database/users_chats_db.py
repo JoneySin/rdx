@@ -26,8 +26,6 @@ def get_local_now():
 # =========================================
 # 💎 PREMIUM PLAN STATE — SINGLE SOURCE OF TRUTH
 # यही dict plan deactivate/reset होने पर लिखा जाता है। पहले यह पूरा 11-key वाला
-# ब्लॉक 5 अलग-अलग फाइलों में हुबहू कॉपी था (utils.is_premium, premium.check_
-# premium_expired, premium.manage_premium, premium.pay_action और यहाँ df_prm) —
 # एक भी reminder flag add/rename करना हो तो 5 जगह edit करना पड़ता था और एक जगह
 # छूट जाने पर plan "आधा reset" हो जाता था। अब हर जगह इसी को copy किया जाता है।
 # ⚠️ हमेशा dict(...) copy पास करें, कभी यह object सीधे mutate न करें।

@@ -5,11 +5,10 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 for key, value in {
-    'API_ID': '1', 'API_HASH': 'test', 'BOT_TOKEN': '1:test', 'ADMINS': '1',
+    'API_ID': '1', 'API_HASH': 'test', 'BOT_TOKEN': '1:test', 'ADMINS': '1 5',
     'LOG_CHANNEL': '-1001', 'BIN_CHANNEL': '-1002',
     'DATABASE_URL': 'mongodb://localhost:27017', 'URL': 'https://example.com',
-    'UPI_ID': 'test@upi', 'UPI_NAME': 'Test Merchant', 'RECEIPT_SEND_USERNAME': '@admin',
-}.items():
+    }.items():
     os.environ.setdefault(key, value)
 
 from pyrogram import enums
@@ -45,7 +44,7 @@ class GroupSendTests(unittest.IsolatedAsyncioTestCase):
             data='grp#7', from_user=SimpleNamespace(id=5),
             message=SimpleNamespace(chat=SimpleNamespace(id=5)), answer=AsyncMock(),
         )
-        with patch.object(commands, 'IS_PREMIUM', False), \
+        with  \
                 patch.object(commands, 'PM_FILE_DELETE_TIME', 0), \
                 patch.object(commands, 'get_groups_by_ids', AsyncMock(return_value=[group(['a', 'b', 'c'])])), \
                 patch.object(commands, 'get_files_by_ids', AsyncMock(return_value=files('a', 'b', 'c'))), \
@@ -65,7 +64,7 @@ class GroupSendTests(unittest.IsolatedAsyncioTestCase):
             data='grp#7', from_user=SimpleNamespace(id=5),
             message=SimpleNamespace(chat=SimpleNamespace(id=5)), answer=AsyncMock(),
         )
-        with patch.object(commands, 'IS_PREMIUM', False), \
+        with  \
                 patch.object(commands, 'PM_FILE_DELETE_TIME', 0), \
                 patch.object(commands, 'get_groups_by_ids',
                              AsyncMock(return_value=[group(['b', 'a'], 'series', ['a', 'b'])])), \
@@ -94,7 +93,7 @@ class GroupSendTests(unittest.IsolatedAsyncioTestCase):
         file = {'_id': 'a', 'file_name': 'Film 720p.mkv', 'file_size': 10,
                 'file_ref': 'ref-a', 'group_id': '7'}
         with patch.object(commands, 'db', SimpleNamespace(is_user_exist=AsyncMock(return_value=True))), \
-                patch.object(commands, 'IS_PREMIUM', False), \
+                 \
                 patch.object(commands, 'REACTIONS', []), \
                 patch.object(commands, 'PM_FILE_DELETE_TIME', 0), \
                 patch.object(commands, 'get_file_details', AsyncMock(return_value=file)), \
@@ -143,7 +142,7 @@ class GroupSendTests(unittest.IsolatedAsyncioTestCase):
         file = {'_id': 'a', 'file_name': 'Film 720p.mkv', 'file_size': 10,
                 'file_ref': 'ref-a', 'group_id': '7'}
         with patch.object(commands, 'db', SimpleNamespace(is_user_exist=AsyncMock(return_value=True))), \
-                patch.object(commands, 'IS_PREMIUM', False), \
+                 \
                 patch.object(commands, 'REACTIONS', []), \
                 patch.object(commands, 'PM_FILE_DELETE_TIME', 0), \
                 patch.object(commands, 'get_file_details', AsyncMock(return_value=file)), \

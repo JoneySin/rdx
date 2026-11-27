@@ -10,14 +10,10 @@ for key, value in {
     'API_ID': '1', 'API_HASH': 'test', 'BOT_TOKEN': '1:test', 'ADMINS': '1',
     'LOG_CHANNEL': '-1001', 'BIN_CHANNEL': '-1002',
     'DATABASE_URL': 'mongodb://localhost:27017', 'URL': 'https://example.com',
-    'UPI_ID': 'test@upi', 'UPI_NAME': 'Test Merchant', 'RECEIPT_SEND_USERNAME': '@admin',
-}.items():
+    }.items():
     os.environ.setdefault(key, value)
 
-import png
-import qrcode
 from database import users_chats_db
-from plugins import premium
 import utils
 
 
@@ -65,39 +61,3 @@ class TimezoneCompatibilityTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(await users_chats_db.Database.get_today_logged_in_users_count(instance), 0)
                 cutoff = col.find.call_args.args[0]['last_login']['$gte']
                 self.assertEqual(cutoff.astimezone(timezone.utc), now.astimezone(timezone.utc) - timedelta(days=1))
-
-
-class PaymentQrTests(unittest.IsolatedAsyncioTestCase):
-    async def test_payment_flow_generates_png_containing_expected_qr(self):
-        response = SimpleNamespace(id=4, text='30')
-        receipt = SimpleNamespace(photo=True, copy=AsyncMock())
-        client = SimpleNamespace()
-        message = SimpleNamespace(chat=SimpleNamespace(id=99),
-            edit=AsyncMock(return_value=SimpleNamespace(id=1)),
-            reply_photo=AsyncMock(return_value=SimpleNamespace(id=2)),
-            reply=AsyncMock(return_value=SimpleNamespace(id=3)))
-        query = SimpleNamespace(from_user=SimpleNamespace(id=55, mention='Test'), message=message, answer=AsyncMock())
-        try:
-            with patch.object(premium, 'ADMINS', []), patch.object(premium, 'safe_del', new_callable=AsyncMock), \
-                    patch.object(premium, 'UPI_ID', 'example@upi'), patch.object(premium, 'UPI_NAME', 'Test Merchant'), \
-                    patch.object(premium, 'PRE_DAY_AMOUNT', 10), \
-                    patch.object(premium, 'wait_for_user_message', AsyncMock(side_effect=[response, receipt])):
-                await premium.buy_callback(client, query)
-            message.reply_photo.assert_awaited_once()
-            payload = message.reply_photo.await_args.kwargs['photo'].getvalue()
-            self.assertEqual(payload[:8], b'\x89PNG\r\n\x1a\n')
-            width, height, pixels, metadata = png.Reader(bytes=payload).read()
-            qr = qrcode.QRCode()
-            qr.add_data('upi://pay?pa=example@upi&pn=Test Merchant&am=300&cu=INR')
-            qr.make(fit=True)
-            matrix = qr.get_matrix()
-            self.assertEqual((width, height), (len(matrix) * qr.box_size,) * 2)
-            self.assertEqual(metadata['planes'], 1)
-            rows = list(pixels)
-            # Every generated module must match the expected UPI payload's QR matrix.
-            for y, row in enumerate(matrix):
-                for x, black in enumerate(row):
-                    self.assertEqual(rows[y * qr.box_size + qr.box_size // 2][x * qr.box_size + qr.box_size // 2], 0 if black else 1)
-            receipt.copy.assert_awaited_once()
-        finally:
-            premium.VERIFY_CACHE.pop(55, None)

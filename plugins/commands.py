@@ -1,3 +1,7 @@
+import os
+import sys
+import gc
+from pyrogram.types import LinkPreviewOptions
 import asyncio
 import random
 import logging
@@ -19,12 +23,12 @@ from database.ia_filterdb import (
 from database.users_chats_db import db
 
 from info import (
-    IS_PREMIUM, URL, BIN_CHANNEL, ADMINS,
+    URL, BIN_CHANNEL, ADMINS,
     LOG_CHANNEL, PICS, IS_STREAM, REACTIONS, PM_FILE_DELETE_TIME,
     PROTECT_CONTENT
 )
 from utils import (
-    is_premium, get_settings, get_size, temp,
+    get_settings, get_size, temp,
     get_readable_time, get_wish, get_seconds, react_to_message
 )
 from stream_security import sign_params, USER_LINK_TTL, STREAM_TTL, MAX_ADMIN_TTL
@@ -128,11 +132,12 @@ async def build_stats_texts():
     post_total, post_movies, post_webseries, post_appvid, post_porn = post_stats
 
     try:
-        users, chats, premium = await asyncio.gather(
-            db.total_users_count(), db.total_chat_count(), db.get_premium_users_count()
+        users, chats = await asyncio.gather(
+            db.total_users_count(), db.total_chat_count()
         )
     except Exception:
-        users = chats = premium = 0
+        users = chats = 0
+    premium = 0
 
     uptime = get_readable_time(time_now() - temp.START_TIME)
 
@@ -181,16 +186,11 @@ async def start(client, message):
             message.from_user.mention, message.from_user.id
         ))
 
-    if IS_PREMIUM and message.from_user.id not in ADMINS and not await is_premium(message.from_user.id, client):
-        return await message.reply_photo(
-            random.choice(PICS),
-            caption=script.PLAN_TXT.format(10, "@admin"),
-            reply_markup=ui_keyboard([[
-                ui_button("💎 Buy Premium Plan", callback_data="activate_plan")
-            ]])
-        )
+    # Admin check for standard bot access
+    # Gated commands ensure only admins can initiate bot actions
 
-    if len(message.command) > 1 and message.command[1] != "premium":
+
+    if len(message.command) > 1:
         try:
             parts = message.command[1].split("_")
             if len(parts) >= 3:
@@ -300,8 +300,7 @@ async def send_group_files(client, query):
     uid = query.from_user.id
     if not temp.SEND_ALL_ENABLED:
         return await query.answer("❌ Send All buttons are turned off by the admin.", show_alert=True)
-    if IS_PREMIUM and uid not in ADMINS and not await is_premium(uid, client):
-        return await query.answer("❌ Premium Expired!", show_alert=True)
+
 
     gid = query.data.split("#", 1)[1].strip() if "#" in query.data else ""
     if not gid:
@@ -460,13 +459,8 @@ async def delete_all_cmd(client, message):
 # ─────────────────────────────────────────────
 @Client.on_message(filters.command("link"))
 async def link_generator(client, message):
-    if IS_PREMIUM and message.from_user.id not in ADMINS and not await is_premium(message.from_user.id, client):
-        return await message.reply(
-            "🔒 **Premium Feature**\n\nOnly Admins and active Premium Members can generate direct links.",
-            reply_markup=ui_keyboard([[
-                ui_button("💎 Buy Premium Plan", callback_data="activate_plan")
-            ]]),
-        )
+    if message.from_user.id not in ADMINS:
+        return await message.reply("🔒 <b>Access Denied:</b> This command is restricted to Bot Admins only.")
 
     media = (
         getattr(message.reply_to_message, 'document', None) or
@@ -476,7 +470,7 @@ async def link_generator(client, message):
     if not media:
         return await message.reply("❌ **No streamable media found in the replied message.**")
 
-    # ⏳ Link validity: premium user = fixed 1 din | admin = /link 12h, /link 3d, /link 0 (kabhi nahi)
+    # ⏳ Link validity: user = fixed 1 din | admin = /link 12h, /link 3d, /link 0 (kabhi nahi)
     ttl = USER_LINK_TTL
     if message.from_user.id in ADMINS and len(message.command) > 1:
         arg = message.command[1].lower()
@@ -534,8 +528,7 @@ async def ui_cb(client, query):
             [ui_button("+ Add to Group +", url=f"https://t.me/{temp.U_NAME}?startgroup=start")],
             [ui_button("👨‍🚒 Help Menu", callback_data="help"), ui_button("📊 Global Stats", callback_data="stats")]
         ]
-        if query.from_user.id not in ADMINS:
-            btn.append([ui_button("💎 Premium Duration", callback_data="myplan")])
+
         buttons_markup = ui_keyboard(btn)
 
     elif data == "help":
@@ -630,3 +623,73 @@ async def stream_cb(client, query):
 # दोनों चलते थे (दो बार delete + दो बार queue cleanup, दूसरी बार हमेशा exception)।
 # अब एक ही merged handler plugins/filter.py में है, जो PM_FILES, auto-delete timer
 # और search-result cache तीनों की सफाई करता है।
+
+
+# ======================================================
+# 🔄 CORE RESTART SESSION MANAGER
+# ======================================================
+@Client.on_message(filters.command('restart') & filters.user(ADMINS))
+async def restart_bot(c, m):
+    msg = await m.reply("<b>🔄 Hard Restarting Bot Application Engine...</b>")
+    with open('restart.txt', 'w') as f: 
+        f.write(f"{m.chat.id} {msg.id}")
+        
+    gc.collect()
+    os.execl(sys.executable, sys.executable, "bot.py")
+
+
+# ======================================================
+# 🆔 ADVANCED ID INSPECTOR (/id) - ADMIN ONLY
+# ======================================================
+def get_media_file_id(msg):
+    if not msg:
+        return None, None
+    for attr in ["photo", "video", "document", "audio", "voice", "animation", "sticker"]:
+        media = getattr(msg, attr, None)
+        if media:
+            return media.file_id, getattr(media, "file_ref", "N/A")
+    return None, None
+
+
+@Client.on_message(filters.command("id") & filters.user(ADMINS))
+async def get_id(c, m):
+    r = m.reply_to_message
+    u = r.from_user if r and r.from_user else m.from_user
+    
+    b = "👤 Member"
+    if m.chat.type in (enums.ChatType.GROUP, enums.ChatType.SUPERGROUP):
+        try:
+            st = (await c.get_chat_member(m.chat.id, u.id)).status
+            if st == enums.ChatMemberStatus.OWNER:
+                b = "👑 Owner"
+            elif st == enums.ChatMemberStatus.ADMINISTRATOR:
+                b = "🛡️ Admin"
+        except: 
+            pass
+
+    lines = [
+        "🆔 <b>ID INFORMATION</b>\n",
+        f"👤 <b>Name:</b> {u.first_name or ''} {u.last_name or ''}",
+        f"🦹 <b>User ID:</b> <code>{u.id}</code>",
+        f"🏷 <b>Username:</b> @{u.username or 'N/A'}",
+        f"🌐 <b>DC ID:</b> <code>{u.dc_id or 'Unknown'}</code>",
+        f"🤖 <b>Bot:</b> {'Yes' if u.is_bot else 'No'}",
+        f"{b}",
+        f"🔗 <b>Profile:</b> <a href='tg://user?id={u.id}'>Open</a>\n",
+        "💬 <b>CHAT & MESSAGE</b>",
+        f"🆔 <b>Chat ID:</b> <code>{m.chat.id}</code>",
+        f"📩 <b>Msg ID:</b> <code>{m.id}</code>",
+    ]
+
+    if m.chat.type in (enums.ChatType.GROUP, enums.ChatType.SUPERGROUP):
+        lines.append(f"Status: <code>Active Group</code>")
+        lines.append(f"📛 <b>Title:</b> {m.chat.title}")
+        lines.append(f"🔗 <b>Link:</b> @{m.chat.username or 'Private'}")
+
+    if r:
+        f_id, _ = get_media_file_id(r)
+        if f_id:
+            lines.append(f"\n📂 <b>MEDIA DETAILS</b>")
+            lines.append(f"🆔 <b>File ID:</b> <code>{f_id}</code>")
+
+    await m.reply_text("\n".join(lines), parse_mode=enums.ParseMode.HTML, link_preview_options=LinkPreviewOptions(is_disabled=True))

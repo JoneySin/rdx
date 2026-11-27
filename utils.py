@@ -7,9 +7,7 @@ from datetime import datetime
 from pyrogram import enums
 from pyrogram.errors import FloodWait
 
-from info import ADMINS, IS_PREMIUM, TIME_ZONE
-# ✅ DRY: premium plan का reset-state dict database layer से ही आता है (एक ही जगह
-# define है), ताकि utils/premium/users_chats_db तीनों में वही 11 keys रहें।
+from info import ADMINS, TIME_ZONE
 from database.users_chats_db import db, DEFAULT_PLAN_STATUS as RESET_PLAN_STATUS
 
 logger = logging.getLogger(__name__)
@@ -120,44 +118,6 @@ def get_local_now():
     return datetime.now(tz).replace(tzinfo=None)
 
 # ─────────────────────────────────────────────
-# 💎 PREMIUM AUTO-VALIDATOR (Perfect info.py TIME_ZONE Sync)
-# ─────────────────────────────────────────────
-async def is_premium(user_id, bot=None):
-    # एडमिन को हमेशा लाइफटाइम बाईपास अनलॉक रहेगा
-    if not IS_PREMIUM or user_id in ADMINS: 
-        return True
-        
-    mp = await db.get_plan(user_id)
-    if not mp.get("premium"): 
-        return False
-    
-    raw_expire = mp.get("expire")
-    if raw_expire:
-        # ✅ DRY: पहले यहाँ strptime try/except inline लिखा था, जो utils के ही
-        # parse_expire_time() की हुबहू कॉपी थी — अब वही helper इस्तेमाल होता है।
-        expire = parse_expire_time(raw_expire)
-        # ✅ FIX: हार्डकोडिंग हटाकर 'info.py' के कस्टमाइज्ड 'TIME_ZONE' से शुद्ध सिंक कॉम्पैरिजन
-        now_local = get_local_now()
-
-        # नोट: unparseable expire string भी reset trigger करती है (पहले जैसा ही) —
-        # वरना corrupt record वाला user हमेशा के लिए free premium पर रह जाता।
-        if not expire or expire < now_local:
-            if bot:
-                try:
-                    await bot.send_message(
-                        user_id,
-                        "❌ <b>Your Premium Membership Plan has Expired!</b>\n\n"
-                        "Contact Admin or use /plan to activate again."
-                    )
-                except:
-                    pass
-
-            # प्रीमियम ख़त्म होते ही डेटाबेस में सारे रिमाइंडर फ़्लैग्स और स्टेटस को तुरंत
-            # रिफ्रेश/रीसेट करें। ✅ DRY: यह 11-key वाला ब्लॉक पहले यहाँ + premium.py में
-            # 3 बार कॉपी था, अब database.users_chats_db.DEFAULT_PLAN_STATUS से आता है।
-            await db.update_plan(user_id, dict(RESET_PLAN_STATUS))
-            return False
-    return True
 
 # ❌ FIX: 'broadcast_messages' (पुराना भारी ब्रॉडकास्ट इंजन कबाड़) पूरी तरह डिलीटेड। 
 # इससे नो-रिपिटिशन रूल और क्लीन आर्किटेक्चर लागू होता है।

@@ -15,7 +15,7 @@ for key, value in {
 }.items():
     os.environ.setdefault(key, value)
 
-from info import PAYMENT_ENV, REQUIRED_ENV
+from info import REQUIRED_ENV
 from plugins import commands
 from plugins import filter as bot_filter
 
@@ -40,7 +40,6 @@ class RequiredEnvTests(unittest.TestCase):
             "API_ID", "API_HASH", "BOT_TOKEN", "ADMINS",
             "LOG_CHANNEL", "BIN_CHANNEL", "DATABASE_URL", "URL",
         ))
-        self.assertEqual(PAYMENT_ENV, ("UPI_ID", "UPI_NAME", "RECEIPT_SEND_USERNAME"))
 
     def test_missing_required_variable_fails_before_anything_else(self):
         env = os.environ.copy()
@@ -61,7 +60,7 @@ class ProtectContentTests(unittest.IsolatedAsyncioTestCase):
         message = _start_message()
         with patch.object(commands, "db", SimpleNamespace(
                     is_user_exist=AsyncMock(return_value=True))), \
-                patch.object(commands, "IS_PREMIUM", False), \
+                 \
                 patch.object(commands, "REACTIONS", []), \
                 patch.object(commands, "PM_FILE_DELETE_TIME", 0), \
                 patch.object(commands, "get_file_details", AsyncMock(return_value=_file())), \
@@ -82,7 +81,7 @@ class ProtectContentTests(unittest.IsolatedAsyncioTestCase):
             answer=AsyncMock())
         group = {"_id": "7", "name": "Film", "members": ["a", "b"],
                  "group_type": "quality", "episode_order": []}
-        with patch.object(commands, "IS_PREMIUM", False), \
+        with  \
                 patch.object(commands, "PM_FILE_DELETE_TIME", 0), \
                 patch.object(commands, "get_groups_by_ids", AsyncMock(return_value=[group])), \
                 patch.object(commands, "get_files_by_ids", AsyncMock(return_value=[

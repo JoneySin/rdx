@@ -12,9 +12,6 @@ if _missing_env:
     logger.error("❌ Missing required environment variable(s): %s", ", ".join(_missing_env))
     exit(1)
 
-# Needed for the self-service premium purchase flow, not for bot startup.
-PAYMENT_ENV = ("UPI_ID", "UPI_NAME", "RECEIPT_SEND_USERNAME")
-
 # ─────────────────────────────────────────────
 # 🧠 HELPERS & BOOLEAN PARSERS (RAM Safe)
 # ─────────────────────────────────────────────
@@ -138,7 +135,6 @@ MAX_WEB_RESULTS = int(environ.get("MAX_WEB_RESULTS", 21))
 # ⏳ TIMERS ENGINE (सेंट्रलाइज्ड कस्टमाइजेबल टाइमर्स)
 # ─────────────────────────────────────────────
 PM_FILE_DELETE_TIME = int(environ.get("PM_FILE_DELETE_TIME", 600)) 
-PREMIUM_REMINDER_BUSY_GAP = int(environ.get("PREMIUM_REMINDER_BUSY_GAP", 60)) 
 
 # ─────────────────────────────────────────────
 # ⚡ SPEED, BUFFER & ANTI-SPAM THRU LMT
@@ -153,7 +149,6 @@ AUTO_DELETE = is_enabled("AUTO_DELETE", True)
 PROTECT_CONTENT = is_enabled("PROTECT_CONTENT", False)
 SPELL_CHECK = is_enabled("SPELL_CHECK", True)
 IS_STREAM = is_enabled("IS_STREAM", True)
-IS_PREMIUM = is_enabled("IS_PREMIUM", True)
 # A full library scan is useful after bulk changes, but running it on every
 # restart can keep a small worker/DB busy for minutes and make normal replies
 # feel slow. Keep it opt-in; the admin dashboard can still trigger it manually.
@@ -192,24 +187,8 @@ else:
         exit(1)
 
 # ─────────────────────────────────────────────
-# 💎 PREMIUM PAYMENT CONFIGURATIONS
 # ─────────────────────────────────────────────
 # Space- or comma-separated Telegram reaction emojis; empty disables them.
 REACTIONS = parse_reactions()
 
-PRE_DAY_AMOUNT = int(environ.get("PRE_DAY_AMOUNT", 10))
-UPI_ID = environ.get("UPI_ID", "").strip()
-UPI_NAME = environ.get("UPI_NAME", "").strip()
 
-RECEIPT_SEND_USERNAME = environ.get("RECEIPT_SEND_USERNAME", "").strip()
-if RECEIPT_SEND_USERNAME and not RECEIPT_SEND_USERNAME.startswith("@") and not RECEIPT_SEND_USERNAME.isnumeric():
-    RECEIPT_SEND_USERNAME = "@" + RECEIPT_SEND_USERNAME
-
-if IS_PREMIUM:
-    _missing_payment = [name for name in PAYMENT_ENV if not (environ.get(name) or "").strip()]
-    if _missing_payment:
-        logger.warning(
-            "⚠️ Premium is ON but self-service purchase is not configured "
-            "(missing: %s). Buy buttons will ask users to contact an admin; "
-            "/add_prm still works.", ", ".join(_missing_payment)
-        )
