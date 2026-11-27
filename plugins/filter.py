@@ -99,7 +99,7 @@ def get_filter_ui(search, files, total, act_src, offset, chat_id, req_id, key, n
     
     delay_min = max(1, round(delay / 60))
     
-    header_bq = (f"<blockquote>⚡ <b>RdxTv Vault</b>  │  🎬 <b>Results:</b> {total}\n"
+    header_bq = (f"<blockquote>🔍 <b>Search Results:</b> {total}\n"
                  f"🗂️ <b>Source:</b> {act_src.upper()}  │  📄 <b>Page:</b> {curr_page}/{total_pages}</blockquote>")
     footer_bq = f"<blockquote>⏳ Auto-clears in {delay_min}m to keep chat clean.</blockquote>"
     

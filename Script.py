@@ -66,9 +66,7 @@ Welcome to <b>RdxTv</b>. Send any movie or series name to search files."""
 • Include the release year if needed (e.g. <code>Avatar 2009</code>)
 • Avoid extra symbols or emojis</blockquote>"""
     
-    FILE_CAPTION = """<b>🎬 {file_name}</b>
-
-<i>⚡ Powered by <b>RdxTv</b></i>"""
+    FILE_CAPTION = """<b>🎬 {file_name}</b>"""
 
     WELCOME_TEXT = """👋 Welcome {mention} to <b>{title}</b>! 🎬
 <i>Send any Movie or Series name to search on RdxTv.</i>"""
@@ -88,7 +86,7 @@ Welcome to <b>RdxTv</b>. Send any movie or series name to search files."""
 • /sendAll on|off - Toggle Send All group buttons
 {repair_command}• /restart - Restart RdxTv engine
 
-<blockquote><b>🛠️ <u>Vault Maintenance</u></b></blockquote>
+<blockquote><b>🛠️ <u>Database Maintenance</u></b></blockquote>
 
 • /check_db - Primary → Cloud vault migration check
 • /cancel - Cancel a running /check_db
@@ -123,7 +121,7 @@ Welcome to <b>RdxTv</b>. Send any movie or series name to search files."""
 • /link - Direct Watch &amp; Download link (reply to media)"""
 
     LOG_INDEX_TXT = """#RdxTvIndexReport
-╭━━━〔 📥 <b>RdxTv Vault Indexer</b> 〕━━━╮
+╭━━━〔 📥 <b>RdxTv Indexer</b> 〕━━━╮
 ┃ 📢 <b>Channel:</b> {}
 ┃ 🆔 <b>ID:</b> <code>{}</code>
 ┃ 🗂️ <b>Vault:</b> <code>#{}</code>

@@ -37,7 +37,7 @@ class RdxTvRebrandTests(unittest.TestCase):
         self.assertIn("RdxTv", log_msg)
 
         cap_msg = script.FILE_CAPTION.format(file_name="Sample.mkv")
-        self.assertIn("RdxTv", cap_msg)
+        self.assertIn("Sample.mkv", cap_msg)
 
     def test_web_brand_and_aurora_theme_tokens(self):
         self.assertIn("Rdx", BRAND_MARKUP)
