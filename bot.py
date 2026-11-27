@@ -53,7 +53,6 @@ from info import (
 from utils import temp
 from database.users_chats_db import db
 from database.ia_filterdb import ensure_indexes
-from plugins.premium import check_premium_expired
 from plugins.commands import load_send_all_setting
 
 # ❌ DEAD CODE REMOVED: यहाँ एक `/health` route था, पर web/dashboard_routes.py में
@@ -298,7 +297,8 @@ class Bot(Client):
             logger.info("🗂️ Startup group scan disabled (set STARTUP_GROUP_SCAN=true to enable)")
 
         # 8. Start Background Automation Tasks (Premium Engine & Auto-Delete Sync)
-        self._premium_task = asyncio.create_task(check_premium_expired(self))
+        # check_premium_expired removed in Admin-Only mode
+        pass
         self._delete_task = asyncio.create_task(auto_delete_worker(self)) 
         logger.info("⏳ Persistent Auto-Delete RAM Guard Activated")
 

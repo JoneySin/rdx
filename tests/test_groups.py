@@ -737,7 +737,6 @@ class GroupingIntegrationTests(unittest.IsolatedAsyncioTestCase):
               patch.object(bot_module.db, "get_banned", AsyncMock(return_value=([], []))),
               patch.object(bot_module.web, "AppRunner", return_value=runner),
               patch.object(bot_module.web, "TCPSite", return_value=site),
-              patch.object(bot_module, "check_premium_expired", background),
               patch.object(bot_module, "auto_delete_worker", background),
               patch.object(bot_module, "ADMINS", []), patch.object(bot_module, "LOG_CHANNEL", None),
               patch.object(bot_module, "STARTUP_GROUP_SCAN", True),

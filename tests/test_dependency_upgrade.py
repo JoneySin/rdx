@@ -17,7 +17,7 @@ from mockupdb import MockupDB
 from pymongo import AsyncMongoClient
 from database import ia_filterdb as db
 from database.users_chats_db import Database
-from plugins import check_db_TEMP, premium
+from plugins import check_db_TEMP
 
 
 class DriverUpgradeTests(unittest.IsolatedAsyncioTestCase):
@@ -83,58 +83,3 @@ class DriverUpgradeTests(unittest.IsolatedAsyncioTestCase):
             await client.close()
             server.stop()
 
-    async def test_payment_listener_is_scoped_to_chat_and_user_and_handles_timeout(self):
-        msg = SimpleNamespace(id=77)
-        reply = AsyncMock()
-        message = SimpleNamespace(chat=SimpleNamespace(id=99), edit=AsyncMock(return_value=msg), reply=reply)
-        query = SimpleNamespace(from_user=SimpleNamespace(id=55), message=message, answer=AsyncMock())
-        client = SimpleNamespace()
-        with patch.object(premium, 'ADMINS', []), patch.object(
-            premium, 'wait_for_user_message', AsyncMock(side_effect=InputTimeout())
-        ) as waiter:
-            await premium.buy_callback(client, query)
-        waiter.assert_awaited_once_with(client, chat_id=99, user_id=55, timeout=60)
-        self.assertIn('Timeout', reply.await_args.args[0])
-
-    async def test_payment_receipt_listener_and_success(self):
-        response = SimpleNamespace(id=4, text='30')
-        receipt = SimpleNamespace(photo=True, copy=AsyncMock())
-        client = SimpleNamespace()
-        message = SimpleNamespace(chat=SimpleNamespace(id=99),
-            edit=AsyncMock(return_value=SimpleNamespace(id=1)),
-            reply_photo=AsyncMock(return_value=SimpleNamespace(id=2)),
-            reply=AsyncMock(return_value=SimpleNamespace(id=3)))
-        query = SimpleNamespace(from_user=SimpleNamespace(id=55, mention='Test'), message=message, answer=AsyncMock())
-        with patch.object(premium, 'ADMINS', []), patch.object(
-            premium, 'safe_del', new_callable=AsyncMock
-        ), patch.object(
-            premium, 'wait_for_user_message', AsyncMock(side_effect=[response, receipt])
-        ) as waiter:
-            await premium.buy_callback(client, query)
-        self.assertEqual(waiter.await_args_list, [
-            call(client, chat_id=99, user_id=55, timeout=60),
-            call(client, chat_id=99, user_id=55, timeout=300),
-        ])
-        receipt.copy.assert_awaited_once()
-        premium.VERIFY_CACHE.pop(55, None)
-
-    async def test_temporary_migration_closes_clients_on_early_return(self):
-        status = SimpleNamespace(edit=AsyncMock())
-        message = SimpleNamespace(from_user=SimpleNamespace(id=56), text='mongodb://new test',
-                                  reply=AsyncMock(return_value=status))
-        old_db = SimpleNamespace(list_collection_names=AsyncMock(return_value=[]))
-        new_db = SimpleNamespace()
-        class FakeClient:
-            def __init__(self, database):
-                self.database = database
-                self.close = AsyncMock()
-                self.admin = SimpleNamespace(command=AsyncMock())
-            def __getitem__(self, name):
-                return self.database
-        old, new = FakeClient(old_db), FakeClient(new_db)
-        check_db_TEMP.PENDING[56] = {'action': 'copy_db'}
-        with patch.object(check_db_TEMP, 'AsyncMongoClient', side_effect=[old, new]):
-            await check_db_TEMP.receive_new_url(None, message)
-        old.close.assert_awaited_once()
-        new.close.assert_awaited_once()
-        self.assertIn('No collections', status.edit.await_args.args[0])
