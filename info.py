@@ -153,7 +153,7 @@ AUTO_DELETE = is_enabled("AUTO_DELETE", True)
 PROTECT_CONTENT = is_enabled("PROTECT_CONTENT", False)
 SPELL_CHECK = is_enabled("SPELL_CHECK", True)
 IS_STREAM = is_enabled("IS_STREAM", True)
-IS_PREMIUM = is_enabled("IS_PREMIUM", True)
+IS_PREMIUM = False
 # A full library scan is useful after bulk changes, but running it on every
 # restart can keep a small worker/DB busy for minutes and make normal replies
 # feel slow. Keep it opt-in; the admin dashboard can still trigger it manually.
@@ -205,11 +205,4 @@ RECEIPT_SEND_USERNAME = environ.get("RECEIPT_SEND_USERNAME", "").strip()
 if RECEIPT_SEND_USERNAME and not RECEIPT_SEND_USERNAME.startswith("@") and not RECEIPT_SEND_USERNAME.isnumeric():
     RECEIPT_SEND_USERNAME = "@" + RECEIPT_SEND_USERNAME
 
-if IS_PREMIUM:
-    _missing_payment = [name for name in PAYMENT_ENV if not (environ.get(name) or "").strip()]
-    if _missing_payment:
-        logger.warning(
-            "⚠️ Premium is ON but self-service purchase is not configured "
-            "(missing: %s). Buy buttons will ask users to contact an admin; "
-            "/add_prm still works.", ", ".join(_missing_payment)
-        )
+# Self-service premium disabled in Admin-Only mode

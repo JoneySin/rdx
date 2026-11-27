@@ -22,7 +22,7 @@ from aiohttp import web
 from pymongo import ReturnDocument, UpdateMany
 
 # कस्टमाइज्ड कोर यूटिल्स और कन्फर्म कंट्रोल्स इम्पोर्ट्स
-from utils import temp, get_size, is_premium, get_duration_str
+from utils import temp, get_size, get_duration_str
 # ✅ SYNC: THUMBNAIL_STORAGE_CHANNEL को इम्पोर्ट किया गया है पृथक स्टोरेज के लिए
 from stream_security import sign_params, STREAM_TTL
 from info import BIN_CHANNEL, ADMINS, BOT_TOKEN, MAX_WEB_RESULTS, MAX_THUMB_CACHE, IS_PREMIUM, THUMBNAIL_STORAGE_CHANNEL
@@ -357,14 +357,6 @@ def verify_telegram_init_data(init_data: str) -> dict | None:
 # rule अलग-अलग न हो जाए (पहले cookie-branch में IS_PREMIUM fallback मिसिंग था)।
 async def _resolve_role_for_tg(tg_id):
     if tg_id in ADMINS: return "admin"
-    # ℹ️ सुधार: पहले यहाँ लिखा था कि bot arg required है और is_premium(tg_id) क्रैश
-    # करेगा — यह गलत था। utils.py में is_premium(user_id, bot=None) है, bot optional
-    # है, इसलिए 1-arg कॉल पहले भी सुरक्षित था। premium.py में एक अलग (dead/unused)
-    # is_premium(uid, bot) कॉपी है जो कहीं import ही नहीं होती। यहाँ temp.BOT भेजना
-    # सिर्फ इसलिए रखा है ताकि plan expire होने पर user को notify भी मिल जाए
-    # (filter.py/commands.py जैसा), यह जरूरी bugfix नहीं बल्कि एक छोटा सुधार है।
-    if await is_premium(tg_id, temp.BOT): return "user"
-    if not IS_PREMIUM: return "user"
     return None
 
 
@@ -384,12 +376,9 @@ async def get_user_role(req):
     # यहाँ दोबारा वही कोड नहीं लिखा गया। सिर्फ premium resolution अलग से जोड़ी गई है
     # क्योंकि API endpoints को JSON 403 चाहिए, redirect नहीं।
     role, tg_id = await web_get_auth(req)
-    if not role:
+    if not role or role != "admin":
         return None, None
-    if role == "admin":
-        return "admin", tg_id
-    resolved = await _resolve_role_for_tg(tg_id)
-    return (resolved, tg_id) if resolved else (None, None)
+    return "admin", tg_id
 
 
 # ─────────────────────────────────────────────────────────

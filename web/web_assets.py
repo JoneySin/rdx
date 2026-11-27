@@ -744,14 +744,11 @@ async def get_auth(req):
     if session and session['expiry'] > time.time():
         tg_id = session['tg_id']
         if tg_id in ADMINS: return 'admin', tg_id
-        return 'user', tg_id
+        return None, None
     return None, None
 
 async def require_active_plan(role, tg_id):
-    if role != 'user':
-        return True
-    mp = await user_db.get_plan(tg_id)
-    return bool(mp.get("premium"))
+    return role == 'admin' or tg_id in ADMINS
 
 NAV_MENU = (
     ("dash", "/dashboard", "🏠", "Home"),

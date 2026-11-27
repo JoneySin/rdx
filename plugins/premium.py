@@ -10,7 +10,6 @@ from pyrogram.errors import MessageNotModified
 from input_waiter import wait_for_user_message
 from keyboards import ui_button, ui_keyboard
 
-# डेटाबेस इम्पोर्ट्स
 from database.users_chats_db import db, web_db 
 from info import (
     IS_PREMIUM, PRE_DAY_AMOUNT, RECEIPT_SEND_USERNAME,
@@ -18,42 +17,23 @@ from info import (
     PREMIUM_REMINDER_BUSY_GAP
 )
 from Script import script
-# DUPLICATION FIX: parse_expire_time, safe_del, get_local_now pehle yahan
-# duplicate the huye the, ab utils.py se reuse ho rahe hain (utils.py hi wo
-# jagah hai jise filter.py/commands.py/search_api.py sab use karte hain).
-# Is file ka apna 'is_premium(uid, bot)' poori tarah hataya gaya - wo kahin
-# bhi call nahi hota tha (dead code), baki sab jagah utils.is_premium hi
-# use hota hai.
-# ✅ DRY: RESET_PLAN_STATUS bhi ab utils/database se aata hai - pehle yahan 11-key
-# wala reset dict 3 baar (check_premium_expired, manage_premium, pay_action) copy tha.
 from utils import (
     get_local_now, parse_expire_time, safe_del, RESET_PLAN_STATUS
 )
 
 logger = logging.getLogger(__name__)
 VERIFY_CACHE = {}
-# One active purchase conversation per user within this bot instance.
 ACTIVE_PURCHASES = set()
 
 ADMIN_MSG = "👑 <b>You are the Admin!</b>\nYou have Lifetime Premium access."
 ADMIN_ALERT = "👑 You are the Admin! You have Lifetime Premium access."
 
-# =========================================
-# Is file ke liye bacha hua akela lifecycle helper
-# =========================================
-# NOTE: naam badla (pehle get_ist_str tha) - utils.py mein usi naam ka ek dead
-# function tha jo dt mein +5:30 jodta tha, aur dono ka kaam alag tha, isliye
-# confusion hota tha. Premium plan ka 'expire' get_local_now() (naive, pehle se
-# local time) se banta hai, isliye yahan +5:30 NAHI jodna hai - jodne par time
-# double-shifted (galat) dikhega.
 def format_plan_expiry(dt):
-    """Premium expiry ko sundar padhne-yogya string mein render karta hai"""
     return dt.strftime("%d %B %Y, %I:%M %p") if dt else "Unknown"
 
-# =========================================
-# ⏰ SMART AUTOMATED REMINDER PIPELINE
-# =========================================
 async def check_premium_expired(bot):
+    if not IS_PREMIUM:
+        return
     intervals = [
         (715, 725, "reminded_12h", "⏰ <b>Premium Reminder</b>\n\nYour plan expires in <b>12 Hours</b>.\n🗓 {}"),
         (355, 365, "reminded_6h", "⚠️ <b>Premium Alert</b>\n\nYour plan expires in <b>6 Hours</b>.\n🗓 {}"),
@@ -107,9 +87,6 @@ async def check_premium_expired(bot):
         
         await asyncio.sleep(PREMIUM_REMINDER_BUSY_GAP)
 
-# =========================================
-# 📱 REBUILT USER & ADMIN COMMANDS
-# =========================================
 @Client.on_message(filters.command("myplan") & filters.private)
 async def myplan_cmd(c, m):
     if not IS_PREMIUM: return
@@ -176,14 +153,11 @@ async def list_web_users(c, m):
         text += f"👤 <b>TG ID:</b> <code>{u['tg_id']}</code>\n📧 <b>Email:</b> {u['email']}\n📅 <b>Joined On:</b> {joined_str}\n\n"
         
     if count == 0:
-        await msg.edit("📭 अभी तक किसी भी यूजर ने वेबसाइट डैशबोर्ड पर रजिस्टर नहीं किया है।")
+        await msg.edit("📭 No registered web users found.")
     else:
         text += f"<b>Total Web Dashboard Users:</b> {count}"
         await msg.edit(text)
 
-# =========================================
-# 📤 INLINE INTERFACE CALLBACKS
-# =========================================
 @Client.on_callback_query(filters.regex("^myplan$"))
 async def myplan_cb(client, query):
     if query.from_user.id in ADMINS: return await query.answer(ADMIN_ALERT, show_alert=True)
@@ -203,7 +177,6 @@ async def myplan_cb(client, query):
     await query.message.edit_caption(f"💎 <b>Premium Subscription Status</b>\n\n📦 Plan Model: {mp.get('plan')}\n⏳ Expires: {format_plan_expiry(exp)}\n⏱ Duration Left: {left}\n\nUse /plan to extend duration.", reply_markup=ui_keyboard(btn))
 
 def _payment_qr(upi_url):
-    """Render a PNG without Pillow. Call off the event loop (pure Python work)."""
     img = qrcode.make(upi_url, image_factory=PyPNGImage)
     bio = io.BytesIO()
     img.save(bio)
@@ -231,7 +204,6 @@ async def buy_callback(c, q):
         try:
             prm_msg = await q.message.edit(f"💎 <b>Select Plan Duration Mode</b>\n\nReply to this message with total days (e.g. <code>30</code>).\nPrice: ₹{PRE_DAY_AMOUNT} / Per Day\n\n⏳ Timeout Session: 60s") or q.message
         except MessageNotModified:
-            # The prompt was already shown (e.g. retry after a timeout).
             prm_msg = q.message
         resp = await wait_for_user_message(c, chat_id=q.message.chat.id, user_id=q.from_user.id, timeout=60)
         await safe_del(c, q.message.chat.id, [prm_msg.id, resp.id])
@@ -249,7 +221,6 @@ async def buy_callback(c, q):
         if not receipt.photo: return await q.message.reply("❌ <b>Invalid Asset Sent!</b> Please send valid transaction receipt photo only.")
         
         await safe_del(c, q.message.chat.id, [qr_msg.id])
-        # Only tell the user it was submitted after the receipt reaches the admin.
         await receipt.copy(RECEIPT_SEND_USERNAME, caption=f"#Payment\n👤 Profile: {q.from_user.mention} (<code>{q.from_user.id}</code>)\n💰 Amount: ₹{amount} ({days} days)", reply_markup=ui_keyboard([[ui_button("✅ Approve Payment", callback_data=f"pay_confirm_{q.from_user.id}_{days}"), ui_button("❌ Reject Invoice", callback_data=f"pay_reject_{q.from_user.id}")]]))
         VERIFY_CACHE[q.from_user.id] = (await q.message.reply("✅ <b>Transaction Sent to Admin Panel for Verification!</b>\nYour premium pack will activate shortly.")).id
     except ValueError: await q.message.reply("❌ Invalid Numeric Entry!")
@@ -281,8 +252,6 @@ async def pay_action(c, q):
     except (ValueError, IndexError, OverflowError, AttributeError, TypeError):
         return await q.answer("❌ Invalid payment action.", show_alert=True)
 
-    # An old receipt already edited by an earlier deployment has no buttons.
-    # Do not apply a stale callback merely because it predates our decision ledger.
     if hasattr(q.message, "reply_markup") and q.message.reply_markup is None:
         return await q.answer("This payment has already been processed.", show_alert=True)
 
@@ -297,8 +266,6 @@ async def pay_action(c, q):
     if not applied:
         return await q.answer("This payment has already been processed.", show_alert=True)
 
-    # Database decision is already durable; Telegram display errors must not
-    # prevent notifying the user or reapply a plan on a subsequent click.
     try:
         await q.answer("Payment approved." if act == "confirm" else "Payment rejected.")
     except Exception:

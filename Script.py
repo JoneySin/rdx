@@ -12,7 +12,6 @@ class script(object):
 ┃ 🎥 <b>Cinema Player</b> — Smooth 10s Skip & Seek
 ┃ 🌐 <b>Web Portal</b> — Curated Series, Posts & Cast
 ┃ ⚡ <b>Direct Byte-Stream</b> — Zero-Wait HD Playback
-┃ 💎 <b>RdxTv VIP</b> — Ad-Free Priority Access
 ╰━━━━━━━━━━━━━━━━━━━━━━━━━━━╯
 
 <i>Tap <b>Launch RdxTv Hub</b> or send any Movie / Series title below to stream instantly! 🚀</i>"""
@@ -92,9 +91,6 @@ class script(object):
 • /stats - Live database &amp; vault telemetry
 • /delete - Move file to Recycle Bin
 • /delete_all - Clear vault collection
-• /add_prm - Grant RdxTv VIP access
-• /rm_prm - Revoke RdxTv VIP access
-• /prm_list - Active RdxTv VIP members
 • /web_users - RdxTv Web Portal accounts
 {repair_command}• /restart - Restart RdxTv engine
 • /sendAll on|off - Toggle Send All group buttons
@@ -136,10 +132,8 @@ class script(object):
     USER_COMMAND_TXT = """<blockquote><b>🎬 <u>RdxTv User Commands</u></b></blockquote>
 
 • /start - Launch RdxTv hub &amp; Mini App
-• /plan - Explore RdxTv VIP plans
-• /myplan - Check your RdxTv VIP status
 • /id - View Telegram User &amp; Chat ID
-• /link - Direct Watch &amp; Download link (reply to media, VIP)"""
+• /link - Direct Watch &amp; Download link (reply to media)"""
 
     LOG_INDEX_TXT = """#RdxTvIndexReport
 ╭━━━〔 📥 <b>RdxTv Vault Indexer</b> 〕━━━╮

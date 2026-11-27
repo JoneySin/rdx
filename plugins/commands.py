@@ -24,7 +24,8 @@ from info import (
     PROTECT_CONTENT
 )
 from utils import (
-    is_premium, get_settings, get_size, temp,
+    is_premium,
+    get_settings, get_size, temp,
     get_readable_time, get_wish, get_seconds, react_to_message
 )
 from stream_security import sign_params, USER_LINK_TTL, STREAM_TTL, MAX_ADMIN_TTL
@@ -128,11 +129,12 @@ async def build_stats_texts():
     post_total, post_movies, post_webseries, post_appvid, post_porn = post_stats
 
     try:
-        users, chats, premium = await asyncio.gather(
-            db.total_users_count(), db.total_chat_count(), db.get_premium_users_count()
+        users, chats = await asyncio.gather(
+            db.total_users_count(), db.total_chat_count()
         )
     except Exception:
-        users = chats = premium = 0
+        users = chats = 0
+    premium = 0
 
     uptime = get_readable_time(time_now() - temp.START_TIME)
 
@@ -182,13 +184,11 @@ async def start(client, message):
         ))
 
     if IS_PREMIUM and message.from_user.id not in ADMINS and not await is_premium(message.from_user.id, client):
-        return await message.reply_photo(
-            random.choice(PICS),
-            caption=script.PLAN_TXT.format(10, "@admin"),
-            reply_markup=ui_keyboard([[
-                ui_button("💎 Buy Premium Plan", callback_data="activate_plan")
-            ]])
-        )
+        if hasattr(message, 'reply'):
+            return await message.reply(
+                "🔒 <b>Access Denied:</b> This bot is strictly <b>Admin-Only</b>. Only authorized Bot Admins can use this service."
+            )
+        return
 
     if len(message.command) > 1 and message.command[1] != "premium":
         try:
@@ -301,7 +301,7 @@ async def send_group_files(client, query):
     if not temp.SEND_ALL_ENABLED:
         return await query.answer("❌ Send All buttons are turned off by the admin.", show_alert=True)
     if IS_PREMIUM and uid not in ADMINS and not await is_premium(uid, client):
-        return await query.answer("❌ Premium Expired!", show_alert=True)
+        return await query.answer("❌ Admin access required!", show_alert=True)
 
     gid = query.data.split("#", 1)[1].strip() if "#" in query.data else ""
     if not gid:
@@ -461,12 +461,7 @@ async def delete_all_cmd(client, message):
 @Client.on_message(filters.command("link"))
 async def link_generator(client, message):
     if IS_PREMIUM and message.from_user.id not in ADMINS and not await is_premium(message.from_user.id, client):
-        return await message.reply(
-            "🔒 **Premium Feature**\n\nOnly Admins and active Premium Members can generate direct links.",
-            reply_markup=ui_keyboard([[
-                ui_button("💎 Buy Premium Plan", callback_data="activate_plan")
-            ]]),
-        )
+        return await message.reply("🔒 <b>Access Denied:</b> This command is restricted to Bot Admins only.")
 
     media = (
         getattr(message.reply_to_message, 'document', None) or
@@ -534,8 +529,7 @@ async def ui_cb(client, query):
             [ui_button("+ Add to Group +", url=f"https://t.me/{temp.U_NAME}?startgroup=start")],
             [ui_button("👨‍🚒 Help Menu", callback_data="help"), ui_button("📊 Global Stats", callback_data="stats")]
         ]
-        if query.from_user.id not in ADMINS:
-            btn.append([ui_button("💎 Premium Duration", callback_data="myplan")])
+
         buttons_markup = ui_keyboard(btn)
 
     elif data == "help":

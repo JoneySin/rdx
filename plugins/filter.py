@@ -212,11 +212,9 @@ async def pm_search(client, message):
     uid = message.from_user.id
     
     if uid not in ADMINS and not await is_premium(uid, client):
-        return await message.reply_photo(
-            random.choice(PICS), 
-            caption=script.PLAN_TXT.format(10, "@admin"), 
-            reply_markup=ui_keyboard([[ui_button("💎 Buy Premium Plan", callback_data="activate_plan")]])
-        )
+        if hasattr(message, 'reply'):
+            return await message.reply("🔒 <b>Access Denied:</b> This bot is strictly <b>Admin-Only</b>. Only authorized Bot Admins can use this service.")
+        return
     
     settings = await get_settings(message.chat.id)
     await auto_filter(client, message, collection_type="all", settings=settings)

@@ -9,7 +9,7 @@ from info import ADMINS, LOG_CHANNEL, PICS, IS_PREMIUM
 from database.users_chats_db import db
 
 # ✅ FIX: is_premium को अब plugins.premium की जगह utils से इम्पोर्ट किया गया है
-from utils import is_premium, temp, get_settings, is_rate_limited
+from utils import temp, get_settings, is_rate_limited
 from Script import script
 
 logger = logging.getLogger(__name__)
@@ -52,9 +52,9 @@ async def welcome(c, m):
             title=m.chat.title
         )
         
-        # ✅ FIX: स्ट्रिक्ट प्रीमियम मॉडल पैच - अगर आने वाला मेंबर प्रीमियम नहीं है, तो उसे सूचित करें
-        if IS_PREMIUM and new_user.id not in ADMINS and not await is_premium(new_user.id, c):
-            welcome_cap += "\n\n🔒 <b>Notice:</b> This is an <u>Admin & Premium Only</u> automated group. Please type /plan in bot PM to unlock your search access."
+        # Admin-Only group notice: inform non-admin members
+        if new_user.id not in ADMINS:
+            welcome_cap += "\n\n🔒 <b>Notice:</b> This bot is strictly <u>Admin-Only</u>. Only authorized Bot Admins can use bot services."
             
         try:
             w_msg = await c.send_message(m.chat.id, welcome_cap)
