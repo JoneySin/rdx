@@ -96,6 +96,16 @@ class script(object):
 • /delete_all - Clear vault collection
 • /sendAll on|off - Toggle Send All group buttons
 {repair_command}• /restart - Restart RdxTv engine
+
+<blockquote><b>🛠️ <u>Vault Maintenance</u></b></blockquote>
+
+• /check_db - Primary → Cloud vault migration check
+• /cancel - Cancel a running /check_db
+
+<blockquote><b>⚙️ <u>Group Controls</u></b></blockquote>
+
+• /search on|off - Toggle group auto-filter search
+• /settings - Group filter settings
 • /button_style - Inline result button style""".replace(
         "{repair_command}",
         "• /repair_library - Refresh thumbnails &amp; migrate metadata (temporary)\n"
