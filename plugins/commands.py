@@ -1,3 +1,7 @@
+import os
+import sys
+import gc
+from pyrogram.types import LinkPreviewOptions
 import asyncio
 import random
 import logging
@@ -619,3 +623,73 @@ async def stream_cb(client, query):
 # दोनों चलते थे (दो बार delete + दो बार queue cleanup, दूसरी बार हमेशा exception)।
 # अब एक ही merged handler plugins/filter.py में है, जो PM_FILES, auto-delete timer
 # और search-result cache तीनों की सफाई करता है।
+
+
+# ======================================================
+# 🔄 CORE RESTART SESSION MANAGER
+# ======================================================
+@Client.on_message(filters.command('restart') & filters.user(ADMINS))
+async def restart_bot(c, m):
+    msg = await m.reply("<b>🔄 Hard Restarting Bot Application Engine...</b>")
+    with open('restart.txt', 'w') as f: 
+        f.write(f"{m.chat.id} {msg.id}")
+        
+    gc.collect()
+    os.execl(sys.executable, sys.executable, "bot.py")
+
+
+# ======================================================
+# 🆔 ADVANCED ID INSPECTOR (/id) - ADMIN ONLY
+# ======================================================
+def get_media_file_id(msg):
+    if not msg:
+        return None, None
+    for attr in ["photo", "video", "document", "audio", "voice", "animation", "sticker"]:
+        media = getattr(msg, attr, None)
+        if media:
+            return media.file_id, getattr(media, "file_ref", "N/A")
+    return None, None
+
+
+@Client.on_message(filters.command("id") & filters.user(ADMINS))
+async def get_id(c, m):
+    r = m.reply_to_message
+    u = r.from_user if r and r.from_user else m.from_user
+    
+    b = "👤 Member"
+    if m.chat.type in (enums.ChatType.GROUP, enums.ChatType.SUPERGROUP):
+        try:
+            st = (await c.get_chat_member(m.chat.id, u.id)).status
+            if st == enums.ChatMemberStatus.OWNER:
+                b = "👑 Owner"
+            elif st == enums.ChatMemberStatus.ADMINISTRATOR:
+                b = "🛡️ Admin"
+        except: 
+            pass
+
+    lines = [
+        "🆔 <b>ID INFORMATION</b>\n",
+        f"👤 <b>Name:</b> {u.first_name or ''} {u.last_name or ''}",
+        f"🦹 <b>User ID:</b> <code>{u.id}</code>",
+        f"🏷 <b>Username:</b> @{u.username or 'N/A'}",
+        f"🌐 <b>DC ID:</b> <code>{u.dc_id or 'Unknown'}</code>",
+        f"🤖 <b>Bot:</b> {'Yes' if u.is_bot else 'No'}",
+        f"{b}",
+        f"🔗 <b>Profile:</b> <a href='tg://user?id={u.id}'>Open</a>\n",
+        "💬 <b>CHAT & MESSAGE</b>",
+        f"🆔 <b>Chat ID:</b> <code>{m.chat.id}</code>",
+        f"📩 <b>Msg ID:</b> <code>{m.id}</code>",
+    ]
+
+    if m.chat.type in (enums.ChatType.GROUP, enums.ChatType.SUPERGROUP):
+        lines.append(f"Status: <code>Active Group</code>")
+        lines.append(f"📛 <b>Title:</b> {m.chat.title}")
+        lines.append(f"🔗 <b>Link:</b> @{m.chat.username or 'Private'}")
+
+    if r:
+        f_id, _ = get_media_file_id(r)
+        if f_id:
+            lines.append(f"\n📂 <b>MEDIA DETAILS</b>")
+            lines.append(f"🆔 <b>File ID:</b> <code>{f_id}</code>")
+
+    await m.reply_text("\n".join(lines), parse_mode=enums.ParseMode.HTML, link_preview_options=LinkPreviewOptions(is_disabled=True))
