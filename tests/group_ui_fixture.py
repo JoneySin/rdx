@@ -23,6 +23,7 @@ from web import search_api as api
 from web.dashboard_routes import DASHBOARD_BODY
 from web.actor_routes import ACTOR_MEDIA_SCRIPT
 from web import actor_routes as actor, post_routes as post, stream_routes as stream, stats_routes as stats
+from web import login_routes as login, profile_routes as profile, recycle_routes as recycle
 from bson import ObjectId
 from web.web_assets import build_page
 
@@ -31,6 +32,7 @@ store = mongo["group_ui_fixture"]
 cols = {name: store[name.capitalize()] for name in ("primary", "cloud", "archive")}
 for name, col in cols.items():
     setattr(db, name, col)
+db.recycle_bin = store.RecycleBin
 db.COLLECTIONS = api.COLLECTIONS = {**cols, "actors": store.Actors}
 db.groups = api.groups = store.QualityGroups
 db.groups.aggregate = AsyncMock(wraps=db.groups.aggregate)
@@ -53,7 +55,13 @@ async def active(_role, _tg_id):
     return True
 
 
-actor.get_auth = post.get_auth = stats.get_auth = admin_role
+actor.get_auth = post.get_auth = stats.get_auth = profile.get_auth = recycle.get_auth = admin_role
+profile.web_db = SimpleNamespace(
+    col=SimpleNamespace(find_one=AsyncMock(return_value={"email": "admin@rdxtv.app", "tg_id": 1})),
+)
+profile.user_db = SimpleNamespace(
+    get_plan=AsyncMock(return_value={"premium": True, "expire": None}),
+)
 stats.db_count_documents = AsyncMock(return_value={})
 stats.get_directory_counts = AsyncMock(return_value=(0, 0, 0, 0))
 stats.get_post_category_counts = AsyncMock(return_value=(0, 0, 0, 0, 0))
@@ -221,6 +229,7 @@ async def thumb(_req):
 
 
 app = web.Application()
+app.router.add_get("/", stream.root_route_handler)
 app.router.add_get("/dashboard", dashboard)
 app.router.add_get("/fixture/user-dashboard", user_dashboard)
 app.router.add_get("/fixture/guest", guest_page)
@@ -231,6 +240,9 @@ app.router.add_post("/fixture/seed_auto", seed_automatic_examples)
 app.router.add_post("/fixture/seed_scan", seed_scan_examples)
 app.router.add_post("/fixture/seed_mixed_recent", seed_mixed_recent)
 app.router.add_get("/api/thumb", thumb)
+app.add_routes(login.login_routes)
+app.add_routes(profile.profile_routes)
+app.add_routes(recycle.recycle_routes)
 app.add_routes(api.search_routes)
 app.add_routes(actor.actor_routes)
 app.add_routes(post.post_routes)

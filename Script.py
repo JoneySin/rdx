@@ -1,157 +1,154 @@
 from pathlib import Path
 
+
 class script(object):
+    
+    START_TXT = """<b>🎬 Hey {}, {}!</b>
 
-    # 🍿 आपके लाइव फीचर्स और प्रीमियम मॉडल के अनुसार स्टार्ट टेक्स्ट (DM locked logic ready)
-    START_TXT = """<blockquote><b><i>Hey {}, {}</i></b></blockquote>
-<blockquote><b><i>I am a powerful & smart auto filter bot! I can provide movies and series with direct stream & download links. 🚀</i></b></blockquote>
+<blockquote><b>⚡ Welcome to RdxTv — Next-Gen Cloud Cinema & Series Hub</b></blockquote>
 
-🍿 <b><u>My Main Features:</u></b>
+╭━━━〔 🌌 <b>RdxTv Core Experience</b> 〕━━━╮
+┃ 📱 <b>RdxTv Mini App</b> — Instant Vault Search
+┃ 🎥 <b>Cinema Player</b> — Smooth 10s Skip & Seek
+┃ 🌐 <b>Web Portal</b> — Curated Series, Posts & Cast
+┃ ⚡ <b>Direct Byte-Stream</b> — Zero-Wait HD Playback
+┃ 💎 <b>RdxTv VIP</b> — Ad-Free Priority Access
+╰━━━━━━━━━━━━━━━━━━━━━━━━━━━╯
 
-<blockquote><b><i>Smart Auto Filter In Chat Groups</i></b></blockquote>
-<blockquote><b><i>📱 Advanced Mini App Cinematic Search</i></b></blockquote>
-<blockquote><b><i>🎬 In-Built Player With Double-Tap Skip</i></b></blockquote>
-<blockquote><b><i>⚡ Superfast Direct Download Links</i></b></blockquote>
-<blockquote><b><i>🛡️ Auto Delete Queue (Restart Proof)</i></b></blockquote>
-<blockquote><b><i>✨ Join Premium For Ads Free Experience</i></b></blockquote>"""
+<i>Tap <b>Launch RdxTv Hub</b> or send any Movie / Series title below to stream instantly! 🚀</i>"""
 
-    # 📊 ✅ NEW PREMIUM UI: एकदम नया मॉडर्न लुक जिसमें Directory भी शामिल है (Admin Only)
-    STATUS_TXT = """<b>🤖 Fast Finder System Telemetry</b>
+    STATUS_TXT = """<b>🛰️ RdxTv System Telemetry</b>
 
-<b>👥 <u>Network Dynamics:</u></b>
-<blockquote><b>🤵 Users:</b> <code>{}</code>
-<b>🏘️ Groups:</b> <code>{}</code>
-<b>💎 Premium:</b> <code>{}</code></blockquote>
+╭━━━〔 👥 <b>Audience & Reach</b> 〕━━━╮
+┃ 👤 <b>Users:</b> <code>{}</code>  │  🏘️ <b>Groups:</b> <code>{}</code>
+┃ 💎 <b>VIP Members:</b> <code>{}</code>
+╰━━━━━━━━━━━━━━━━━━━━━━━━━━╯
 
-<b>🗄️ <u>Data Centre (Total: {}):</u></b>
-<blockquote><b>🟢 Primary:</b> <code>{}</code> (🖼️ <code>{}</code>)
-<b>🔵 Cloud:</b> <code>{}</code> (🖼️ <code>{}</code>)
-<b>🟠 Archive:</b> <code>{}</code> (🖼️ <code>{}</code>)</blockquote>
+╭━━━〔 🗄️ <b>RdxTv Media Vaults</b> 〕━━━╮
+┃ 📦 <b>Total Indexed:</b> <code>{}</code>
+┃ 🎬 <b>Primary Vault:</b> <code>{}</code> <i>(🖼️ {})</i>
+┃ ☁️ <b>Cloud Vault:</b> <code>{}</code> <i>(🖼️ {})</i>
+┃ 🗄️ <b>Archive Vault:</b> <code>{}</code> <i>(🖼️ {})</i>
+╰━━━━━━━━━━━━━━━━━━━━━━━━━━╯
 
-<b>🗂️ <u>Universal Directory (Total: {}):</u></b>
-<blockquote><b>🎭 Actors:</b> <code>{}</code>
-<b>📱 Apps:</b> <code>{}</code>
-<b>🌐 Websites:</b> <code>{}</code></blockquote>
+╭━━━〔 🎭 <b>Directory & Studio</b> 〕━━━╮
+┃ 🌟 <b>Profiles:</b> <code>{}</code> <i>(🎭 {} │ 📱 {} │ 🌐 {})</i>
+┃ 🎞️ <b>Posts:</b> <code>{}</code> <i>(🎬 {} │ 📺 {} │ 📱 {} │ 🔞 {})</i>
+┃ 🖼️ <b>Total Posters:</b> <code>{}</code>
+╰━━━━━━━━━━━━━━━━━━━━━━━━━━╯
 
-<b>📝 <u>Posts CMS (Total: {}):</u></b>
-<blockquote><b>🎬 Movies:</b> <code>{}</code>
-<b>📺 Web Series:</b> <code>{}</code>
-<b>📱 App Video:</b> <code>{}</code>
-<b>🔞 Porn:</b> <code>{}</code></blockquote>
+⏱️ <b>Engine Uptime:</b> <code>{}</code>"""
 
-<b>⚙️ <u>Engine Metrics:</u></b>
-<blockquote><b>🖼️ Global Thumbs:</b> <code>{}</code>
-<b>⏱️ Uptime:</b> <code>{}</code></blockquote>"""
+    USER_STATUS_TXT = """<b>🌐 RdxTv Cloud Library</b>
 
-    # ✅ सिर्फ प्रीमियम/नॉर्मल यूज़र्स के लिए ग्लोबल लाइब्रेरी स्टैट्स
-    USER_STATUS_TXT = """<b>📊 Fast Finder Global Library</b>
+╭━━━〔 🎞️ <b>Indexed Media</b> 〕━━━╮
+┃ 📦 <b>Total Files:</b> <code>{}</code>
+┃ 🎬 <b>Primary:</b> <code>{}</code>
+┃ ☁️ <b>Cloud:</b> <code>{}</code>
+┃ 🗄️ <b>Archive:</b> <code>{}</code>
+╰━━━━━━━━━━━━━━━━━━━━━━━╯
 
-<b>🗄️ <u>Content Vault:</u></b>
-<blockquote><b>🚀 Total Titles:</b> <code>{}</code>
-<b>🟢 Primary:</b> <code>{}</code>
-<b>🔵 Cloud:</b> <code>{}</code>
-<b>🟠 Archive:</b> <code>{}</code></blockquote>
+╭━━━〔 🌟 <b>Curated Catalog</b> 〕━━━╮
+┃ 🎭 <b>Profiles:</b> <code>{}</code> <i>(👤 {} │ 📱 {} │ 🌐 {})</i>
+┃ 📺 <b>Studio Posts:</b> <code>{}</code>
+╰━━━━━━━━━━━━━━━━━━━━━━━╯
 
-<b>🗂️ <u>Universal Directory:</u></b>
-<blockquote><b>🌟 Total Profiles:</b> <code>{}</code>
-<b>🎭 Actors:</b> <code>{}</code>
-<b>📱 Apps:</b> <code>{}</code>
-<b>🌐 Websites:</b> <code>{}</code></blockquote>
+⏱️ <b>Uptime:</b> <code>{}</code>"""
 
-<b>📝 <u>Posts Published:</u></b> <code>{}</code>
+    NEW_GROUP_TXT = """#RdxTvGroup
+╭━━━〔 🏘️ <b>New Group Connected</b> 〕━━━╮
+┃ 📌 <b>Title:</b> {}
+┃ 🆔 <b>ID:</b> <code>{}</code>
+┃ 🔗 <b>Username:</b> @{}
+┃ 👥 <b>Members:</b> <code>{}</code>
+╰━━━━━━━━━━━━━━━━━━━━━━━━━━╯"""
 
-<b>⏱️ System Running Since:</b> <code>{}</code>"""
+    NEW_USER_TXT = """#RdxTvUser
+👤 <b>Name:</b> {}
+🆔 <b>ID:</b> <code>{}</code>"""
 
-    NEW_GROUP_TXT = """<b>#NewGroup 👥\n\n• Title: {}\n• ID: <code>{}</code>\n• Username: {}\n• Total Members: <code>{}</code></b>"""
+    NOT_FILE_TXT = """👋 Hello {},
 
-    NEW_USER_TXT = """<b>#NewUser 👤\n\n• Name: {}\n• ID: <code>{}</code></b>"""
+🔎 We couldn't find <b>"{}"</b> in the <b>RdxTv</b> vault yet.
 
-    NOT_FILE_TXT = """<b>❌ Hey {}, "{}" is not found in my database. 
+<blockquote>💡 <b>Quick Search Tips:</b>
+• Check the exact spelling on Google / IMDb
+• Include the release year if needed (e.g. <code>Avatar 2009</code>)
+• Avoid extra symbols or emojis</blockquote>"""
+    
+    FILE_CAPTION = """<b>🎬 {file_name}</b>
 
-💡 <u>Please Check:</u>
-» Spelling should be correct (check Google)
-» Search with movie name only ( things like 4k, Bluray, Season, Year हटा दें)</b>"""
+<i>⚡ Powered by <b>RdxTv</b></i>"""
 
-    FILE_CAPTION = """<b>{file_name}</b>"""
+    WELCOME_TEXT = """👋 Welcome {mention} to <b>{title}</b>! 🎬
+<i>Send any Movie or Series name to search on RdxTv.</i>"""
 
-    WELCOME_TEXT = """👋 Hello {mention}, Welcome to {title} group! 💞"""
+    HELP_TXT = """<b>⚡ RdxTv Command Center — {}</b>
 
-    HELP_TXT = """<blockquote><b>👋 Hello {},</b></blockquote>
+<blockquote>Select a module below to view user guides, admin controls, and system tools.</blockquote>"""
 
-<b>Fast. Smart. Powerful.
+    ADMIN_COMMAND_TXT = """<blockquote><b>👑 <u>RdxTv Admin Console</u></b></blockquote>
 
-Choose a category below. 👇</b>"""
-
-    ADMIN_COMMAND_TXT = """<blockquote><b>👑 <u>Bot Admin Commands:</u> 👇</b></blockquote>
-
-• /stats - Database stats
-• /delete - Delete file
-• /delete_all - Clear collection
-• /add_prm - Add premium
-• /rm_prm - Remove premium
-• /prm_list - Premium users
-• /web_users - Web users
-{repair_command}• /restart - Restart bot
+• /stats - Live database &amp; vault telemetry
+• /delete - Move file to Recycle Bin
+• /delete_all - Clear vault collection
+• /add_prm - Grant RdxTv VIP access
+• /rm_prm - Revoke RdxTv VIP access
+• /prm_list - Active RdxTv VIP members
+• /web_users - RdxTv Web Portal accounts
+{repair_command}• /restart - Restart RdxTv engine
 • /sendAll on|off - Toggle Send All group buttons
 • /users - Export users.txt backup
 • /chats - Export chats.txt backup
 
-<blockquote><b>🛠️ <u>Bot Maintenance:</u> 👇</b></blockquote>
+<blockquote><b>🛠️ <u>Vault &amp; Chat Maintenance</u></b></blockquote>
 
-• /leave &lt;chat_id&gt; - Leave a chat
+• /leave &lt;chat_id&gt; - Disconnect from a chat
 • /invite_link &lt;chat_id&gt; - Generate invite link
-• /ban_grp | /unban_grp &lt;id&gt; [reason] - Ban / unban a group
-• /ban_user | /unban_user &lt;id&gt; [reason] - Ban / unban a user
-• /check_db - Primary → cloud migration check
+• /ban_grp | /unban_grp &lt;id&gt; [reason] - Moderate group access
+• /ban_user | /unban_user &lt;id&gt; [reason] - Moderate user access
+• /check_db - Primary → Cloud vault migration check
 • /cancel - Cancel a running /check_db
 
-<blockquote><b>⚙️ <u>Group Commands:</u> 👇</b></blockquote>
+<blockquote><b>⚙️ <u>Group Controls</u></b></blockquote>
 
-• /search - Auto Filter
-• /settings - Group settings
-• /button_style - Result style""".replace(
+• /search - Auto Filter search
+• /settings - Group filter settings
+• /button_style - Inline result button style""".replace(
         "{repair_command}",
-        "• /repair_library - Refresh thumbnails and migrate metadata (temporary)\n"
+        "• /repair_library - Refresh thumbnails &amp; migrate metadata (temporary)\n"
         if (Path(__file__).parent / "plugins" / "repair_library_TEMP.py").is_file() else "",
     )
 
-    PLAN_TXT = """💎 <b>Fast Finder Premium Plans</b> 💎
+    PLAN_TXT = """<b>💎 RdxTv VIP Membership 💎</b>
 
-Activate a premium plan to unlock exclusive, high-speed features!
+<blockquote>Unlock instant ad-free streaming, priority multi-vault search, and full access to the <b>RdxTv Web Cinema</b> portal!</blockquote>
 
-⚡ <b>Price:</b> <code>₹{} / Per Day</code> ⚡
+╭━━━〔 ⚡ <b>VIP Rate</b> 〕━━━╮
+┃ 💰 <b>Price:</b> <code>₹{} / Day</code>
+╰━━━━━━━━━━━━━━━━━━━━╯
 
-🚀 <b>Premium Features Include:</b>
-» 🍿 Ad-Free Experience (No interruptions)
-» 🎬 Online Streaming & Superfast Downloads
-» 🔓 No Need to Join Extra Channels (No FSUB)
-» ⚡ Zero Verification / Shortlinks Required
-» 👑 Dedicated Admin Support
+<b>📲 How to Activate:</b>
+1️⃣ Tap <b>Buy Subscription</b> below and choose your duration.
+2️⃣ Complete payment using the generated UPI QR / Pay link.
+3️⃣ Send your payment screenshot to {} for instant activation! 🚀"""
 
-👨‍🚒 <b>Support & Verification:</b> {}"""
+    USER_COMMAND_TXT = """<blockquote><b>🎬 <u>RdxTv User Commands</u></b></blockquote>
 
-    USER_COMMAND_TXT = """<blockquote><b>👨‍💻 <u>Bot User Commands:</u> 👇</b></blockquote>
+• /start - Launch RdxTv hub &amp; Mini App
+• /plan - Explore RdxTv VIP plans
+• /myplan - Check your RdxTv VIP status
+• /id - View Telegram User &amp; Chat ID
+• /link - Direct Watch &amp; Download link (reply to media, VIP)"""
 
-• /start - Main menu
-• /plan - Premium plans
-• /myplan - Premium status
-• /id - User & Chat ID
-• /link - Watch & Download link (reply to media, Premium)"""
-
-    LOG_INDEX_TXT = """📢 <b>#Indexing_Report 📊</b>
-
-<b>📂 Storage Parameters:</b>
-» Chat Title: <code>{}</code>
-» Chat ID: <code>{}</code>
-» Collection Targeted: <code>{}</code>
-
-<b>📈 Execution Statistics:</b>
-» Total Processed: <code>{}</code> Files
-» Successfully Saved: <code>{}</code> Files
-» Duplicates Skipped: <code>{}</code> Files
-» Unsupported Format: <code>{}</code> Files
-» Errors Intercepted: <code>{}</code> Files
-
-<b>⏱️ Engine Performance:</b>
-» Status: <code>Completed Successfully ✅</code>
-» Triggered By: <code>Authorized Bot Admin 👮‍♂️</code>"""
+    LOG_INDEX_TXT = """#RdxTvIndexReport
+╭━━━〔 📥 <b>RdxTv Vault Indexer</b> 〕━━━╮
+┃ 📢 <b>Channel:</b> {}
+┃ 🆔 <b>ID:</b> <code>{}</code>
+┃ 🗂️ <b>Vault:</b> <code>#{}</code>
+┃ 🔢 <b>Processed:</b> <code>{}</code>
+┃ ✅ <b>Saved:</b> <code>{}</code>
+┃ ♻️ <b>Duplicates:</b> <code>{}</code>
+┃ 🚫 <b>Unsupported:</b> <code>{}</code>
+┃ ⚠️ <b>Errors:</b> <code>{}</code>
+╰━━━━━━━━━━━━━━━━━━━━━━━━━━╯"""

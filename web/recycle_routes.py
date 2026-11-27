@@ -80,13 +80,13 @@ _CSS = """<style>
 .rb-chip.cloud{color:#93c5fd;border-color:rgba(96,165,250,.5)}
 .rb-chip.archive{color:#fdba74;border-color:rgba(251,146,60,.5)}
 .rb-date{font-size:10px;color:var(--muted);line-height:1.4}
-.rb-actions{display:none;position:absolute;top:8px;right:8px;z-index:45;min-width:172px;flex-direction:column;gap:5px;padding:6px;background:var(--bg2);border:1px solid var(--accent);border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.32)}
+.rb-actions{display:none;position:absolute;top:8px;right:8px;z-index:45;min-width:172px;flex-direction:column;gap:5px;padding:6px;background:var(--bg2);border:1px solid var(--accent-cyan);border-radius:12px;box-shadow:0 14px 34px rgba(2,6,23,.48)}
 .rb-card.rb-active .rb-actions{display:flex}
 .rb-actions .rb-btn{width:100%;padding:9px 11px;font-size:11px;text-align:left}
 .rb-btn.restore{color:#22c55e;border-color:rgba(34,197,94,.45);background:rgba(34,197,94,.08)}
 .rb-btn.restore:hover{background:rgba(34,197,94,.16);border-color:#22c55e;color:#22c55e}
-.rb-btn.purge{color:#ff8b93;border-color:rgba(229,9,20,.45);background:rgba(229,9,20,.08)}
-.rb-btn.purge:hover{background:rgba(229,9,20,.18);border-color:var(--accent);color:#fff}
+.rb-btn.purge{color:#fb7185;border-color:rgba(244,63,94,.45);background:rgba(244,63,94,.08)}
+.rb-btn.purge:hover{background:rgba(244,63,94,.85);border-color:#f43f5e;color:#fff}
 .rb-empty{grid-column:1/-1;text-align:center;padding:64px 20px;color:var(--muted);border:1px dashed var(--border);border-radius:12px;background:var(--card)}
 .rb-empty b{display:block;color:var(--text);font-size:15px;margin-bottom:6px}
 .rb-pager{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:20px}
@@ -323,7 +323,7 @@ async def recycle_page(req):
     role, _ = await get_auth(req)
     if role != 'admin':
         return web.HTTPFound('/dashboard')
-    return build_page('Recycle Bin - Fast Finder', _page_body(), '', 'recycle', role)
+    return build_page('Recycle Bin - RdxTv', _page_body(), '', 'recycle', role)
 
 
 @recycle_routes.get('/api/recycle/list')

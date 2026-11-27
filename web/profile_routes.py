@@ -71,19 +71,19 @@ async def profile_page(req):
     # क्योंकि 'expire' key हमेशा मौजूद रहती है (df_prm डिफॉल्ट में None के साथ) —
     # non-premium user को literal "None" शब्द दिखता था। अब `or` से सही fallback है।
     if role == 'admin':
-        st_txt, exp_txt, st_clr = "👑 Admin (Lifetime Access)", "Never (Lifetime)", "#e50914"
+        st_txt, exp_txt, st_clr = "👑 RdxTv Admin (Lifetime Access)", "Never (Lifetime)", "#06b6d4"
     elif mp.get('premium'):
-        st_txt, exp_txt, st_clr = "💎 Premium User", (mp.get('expire') or 'Unknown'), "#3399ff"
+        st_txt, exp_txt, st_clr = "💎 RdxTv VIP Member", (mp.get('expire') or 'Unknown'), "#6366f1"
     else:
-        st_txt, exp_txt, st_clr = "🆓 Free Account (No Active Plan)", "Use /plan in Bot PM to activate", "#808080"
+        st_txt, exp_txt, st_clr = "🆓 Free Account (No Active VIP Plan)", "Use /plan in Bot PM to activate", "#8ea4cb"
     err_h = f'<div class="err-box">{html.escape(req.query.get("err", ""))}</div>' if req.query.get('err') else ''
     msg_h = f'<div class="success-box">{html.escape(req.query.get("msg", ""))}</div>' if req.query.get('msg') else ''
     email = html.escape(str(email or ''), quote=True)
     exp_txt = html.escape(str(exp_txt), quote=True)
     tg_id = html.escape(str(tg_id), quote=True)
 
-    b = f'''{_PROFILE_CSS}<div class="main" style="padding-top:40px; max-width:700px;"><div class="scard">{err_h}{msg_h}<h2 style="margin-bottom:24px;">Account Settings</h2>
-    <div class="prof-status" style="border-left:4px solid {st_clr};"><div style="font-size:12px;color:var(--muted);margin-bottom:5px;">Account Status</div><div style="font-size:18px;font-weight:700;color:{st_clr};margin-bottom:8px;">{st_txt}</div><div style="font-size:12px;color:var(--muted);margin-bottom:2px;">Subscription expires:</div><div style="font-size:15px;font-weight:500;">{exp_txt}</div></div>
+    b = f'''{_PROFILE_CSS}<div class="main" style="padding-top:26px; max-width:720px;"><div class="hub-banner" style="padding-top:0;"><div><div class="hub-kicker">⚙️ RdxTv Account</div><div class="hub-banner-title">Account &amp; Security Settings</div><div class="hub-banner-sub">Manage your linked email, password, and RdxTv VIP subscription status.</div></div></div><div class="scard">{err_h}{msg_h}<h2 style="margin-bottom:22px;">Profile Overview</h2>
+    <div class="prof-status" style="border-left:4px solid {st_clr};"><div style="font-size:12px;color:var(--muted);margin-bottom:5px;">Membership Tier</div><div style="font-size:18px;font-weight:800;color:{st_clr};margin-bottom:8px;">{st_txt}</div><div style="font-size:12px;color:var(--muted);margin-bottom:2px;">Subscription expires:</div><div style="font-size:15px;font-weight:600;">{exp_txt}</div></div>
     <div class="prof-tab-bar"><button class="prof-tab active" data-tab="account">Account Info</button><button class="prof-tab" data-tab="security">Security</button></div>
     <form action="/api/update_profile" method="post">
       <div class="prof-panel active" id="panel-account">
@@ -91,7 +91,7 @@ async def profile_page(req):
         <div class="prof-field"><div class="scard-label">Current Email</div><input class="prof-input" type="text" value="{email}" disabled></div>
         <div class="prof-field"><div class="scard-label">New Email Address *</div><input class="prof-input" type="email" name="new_email" value="{email}" placeholder="Enter new email..." required></div>
         <hr class="prof-divider">
-        <div class="info-row"><svg width="18" height="18" viewBox="0 0 24 24" fill="#3399ff"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg><div><div class="info-row-lbl">Linked Telegram Account</div><div class="info-row-val">ID: {tg_id}</div></div></div>
+        <div class="info-row"><svg width="18" height="18" viewBox="0 0 24 24" fill="#06b6d4"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg><div><div class="info-row-lbl">Linked Telegram Account</div><div class="info-row-val">ID: {tg_id}</div></div></div>
       </div>
       <div class="prof-panel" id="panel-security">
         <div class="prof-field"><div class="scard-label">New Password <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;font-size:11px;">(leave blank to keep current)</span></div>
@@ -99,9 +99,9 @@ async def profile_page(req):
           <div class="str-row"><div class="str-bar"></div><div class="str-bar"></div><div class="str-bar"></div><div class="str-bar"></div></div><div id="strLabel" style="font-size:11px;margin-top:5px;display:none;"></div></div>
         <div class="info-row"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><div><div class="info-row-lbl">Password protection</div><div class="info-row-val">Active</div></div></div>
       </div>
-      <div class="prof-save-row"><button class="search-btn" type="submit" style="display:inline-flex;align-items:center;gap:8px;padding:11px 24px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Save Changes</button></div>
+      <div class="prof-save-row"><button class="search-btn" type="submit" style="display:inline-flex;align-items:center;gap:8px;padding:11px 24px;box-shadow:0 6px 20px var(--accent-glow);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Save Changes</button></div>
     </form></div></div>{_PROFILE_JS}'''
-    return build_page("Profile - Fast Finder", b, "", "profile", role)
+    return build_page("Profile - RdxTv", b, "", "profile", role)
 
 
 @profile_routes.post('/api/update_profile')

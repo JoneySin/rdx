@@ -245,12 +245,12 @@ async def start(client, message):
         return
 
     btn = [
-        [ui_button("🍿 Open Mini App", web_app=WebAppInfo(url=MINI_APP_URL))],
-        [ui_button("+ Add to Group +", url=f"https://t.me/{temp.U_NAME}?startgroup=start")],
-        [ui_button("👨‍🚒 Help Menu", callback_data="help"), ui_button("📊 Global Stats", callback_data="stats")]
+        [ui_button("🎬 Launch RdxTv Hub", web_app=WebAppInfo(url=MINI_APP_URL))],
+        [ui_button("➕ Add RdxTv to Group", url=f"https://t.me/{temp.U_NAME}?startgroup=start")],
+        [ui_button("🧭 Help Center", callback_data="help"), ui_button("🛰️ Live Stats", callback_data="stats")]
     ]
     if message.from_user.id not in ADMINS:
-        btn.append([ui_button("💎 Premium Duration", callback_data="myplan")])
+        btn.append([ui_button("💎 RdxTv VIP Status", callback_data="myplan")])
 
     await message.reply_photo(
         random.choice(PICS),

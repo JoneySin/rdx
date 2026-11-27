@@ -168,7 +168,7 @@ async def prm_list(c, m):
 async def list_web_users(c, m):
     msg = await m.reply("🔄 Fetching Web Server Registration Logs...")
     count = 0
-    text = "🌐 <b>Fast Finder Registered Web Users</b>\n\n"
+    text = "🌐 <b>RdxTv Registered Web Users</b>\n\n"
     async for u in web_db.col.find({}, {"tg_id": 1, "email": 1, "joined_date": 1}): 
         count += 1
         joined = u.get('joined_date')

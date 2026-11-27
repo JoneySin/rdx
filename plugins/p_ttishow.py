@@ -157,7 +157,7 @@ async def export_db(c, m):
             if os.path.exists(fn): os.remove(fn)
             return await msg.edit(f"📭 {typ} Database Population is Empty.")
 
-        await m.reply_document(fn, caption=f"📊 <b>Fast Finder Backup Report</b>\n\n👥 Total Registered {typ}s: <code>{cnt}</code>")
+        await m.reply_document(fn, caption=f"📊 <b>RdxTv Backup Report</b>\n\n👥 Total Registered {typ}s: <code>{cnt}</code>")
         await msg.delete()
         
     except Exception as e:

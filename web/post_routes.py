@@ -61,7 +61,7 @@ async def create_post_page(req):
     if role != 'admin':
         return web.HTTPFound('/dashboard')
     body = build_post_editor(err=req.query.get('err', ''), msg=req.query.get('msg', ''))
-    return build_page("Create Post", body, "", "posts", role)
+    return build_page("Create Post - RdxTv", body, "", "posts", role)
 
 
 @post_routes.get('/admin/edit_post/{id}')
@@ -77,7 +77,7 @@ async def edit_post_page(req):
     if not post:
         return web.HTTPFound('/posts?err=Post+not+found')
     body = build_post_editor(post, post_id, req.query.get('err', ''), req.query.get('msg', ''))
-    return build_page("Edit Post", body, "", "posts", role)
+    return build_page("Edit Post - RdxTv", body, "", "posts", role)
 
 
 # ─────────────────────────────────────────────────────────
@@ -246,14 +246,20 @@ async def posts_directory_page(req):
     
     all_posts, has_next_init = await catalog_page(posts_col, {})
     
-    admin_btn = '''<button onclick="window.location.href='/admin/create_post'" style="background:var(--accent); color:#fff; border:none; padding:10px 15px; border-radius:8px; font-weight:800; cursor:pointer; font-size:13px; flex:1; min-width:130px; box-shadow:0 4px 15px rgba(229,9,20,0.3); transition:0.2s;">➕ Create</button>''' if role == 'admin' else ""
+    admin_btn = '''<button onclick="window.location.href='/admin/create_post'" style="background:var(--accent-grad); color:#fff; border:none; padding:10px 16px; border-radius:10px; font-weight:800; cursor:pointer; font-size:13px; flex:1; min-width:130px; box-shadow:0 6px 18px var(--accent-glow); transition:0.2s;">➕ Create Post</button>''' if role == 'admin' else ""
     
     search_ui = f'''
     {DIRECTORY_CSS}
-    
+    <div class="hub-banner" style="padding-top:6px;">
+        <div>
+            <div class="hub-kicker">🎬 RdxTv Studio</div>
+            <div class="hub-banner-title">Curated Movies &amp; Web Series</div>
+            <div class="hub-banner-sub">Hand-crafted cinema posts with posters, screenshots, and multi-episode streaming links.</div>
+        </div>
+    </div>
     <div class="search-box">
         <div class="s-row-1" id="postSearchRow">
-            <input type="text" id="post_q" class="s-input" placeholder="Search movies, series, posts...">
+            <input type="text" id="post_q" class="s-input" placeholder="Search curated movies, web series, posts...">
             <span class="s-spinner" id="postSpinner"></span>
         </div>
         <div class="s-row-2">
@@ -398,7 +404,7 @@ async def posts_directory_page(req):
     }});
     </script>'''
 
-    return build_page("Posts Catalog", f'<div class="main" style="padding-top:20px; max-width:1100px; margin:0 auto; padding-left:20px; padding-right:20px;">{search_ui}{initial_grid}{js_logic}</div>', "", "posts", role)
+    return build_page("Posts Catalog - RdxTv", f'<div class="main" style="padding-top:20px; max-width:1100px; margin:0 auto; padding-left:20px; padding-right:20px;">{search_ui}{initial_grid}{js_logic}</div>', "", "posts", role)
 
 @post_routes.get('/api/posts/search')
 async def api_posts_search(req):
@@ -446,12 +452,11 @@ async def single_post_display(req):
     cover = post.get("cover_image", "")
     img_src = html.escape(post_image_src(cover), quote=True)
     
-    # 📌 Show Category along with tags
     cat = post.get("category", "")
-    cat_html = f'<span style="background:var(--accent); border:1px solid var(--accent); color:#fff; font-size:12px; padding:5px 12px; border-radius:6px; font-weight:800; letter-spacing:0.5px;">📁 {html.escape(cat)}</span>' if cat else ""
+    cat_html = f'<span style="background:var(--accent-grad); color:#fff; font-size:11.5px; padding:5px 12px; border-radius:999px; font-weight:800; letter-spacing:0.4px; box-shadow:0 4px 12px var(--accent-glow);">🎬 {html.escape(cat)}</span>' if cat else ""
     
-    tags_html = "".join([f'<span style="background:var(--bg4); border:1px solid var(--border); color:var(--text); font-size:12px; padding:5px 12px; border-radius:6px; font-weight:700;">#{html.escape(t)}</span>' for t in post.get("tags", [])])
-    tags_div = f'<div style="display:flex; flex-wrap:wrap; gap:10px; background:var(--bg); padding:15px; border-radius:8px; margin-top:15px; margin-bottom:15px;">{cat_html}{tags_html}</div>' if (tags_html or cat_html) else ""
+    tags_html = "".join([f'<span style="background:var(--bg3); border:1px solid var(--border); color:var(--muted); font-size:11.5px; padding:5px 12px; border-radius:999px; font-weight:700;">#{html.escape(t)}</span>' for t in post.get("tags", [])])
+    tags_div = f'<div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; margin-bottom:14px;">{cat_html}{tags_html}</div>' if (tags_html or cat_html) else ""
     
     # 🍿 Premium Netflix Style Episodes Layout
     video_buttons = ""
@@ -467,9 +472,9 @@ async def single_post_display(req):
             
         for heading, v_list in grouped_vids.items():
             video_buttons += f'''
-            <div style="margin-bottom:20px; background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:15px; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
-                <div style="font-size:16px; font-weight:900; color:var(--text); margin-bottom:12px; display:flex; align-items:center; gap:10px;">
-                    <span style="background:var(--accent); width:5px; height:18px; border-radius:4px;"></span>
+            <div style="margin-bottom:20px; background:var(--card); border:1px solid var(--border); border-radius:16px; padding:18px; box-shadow:var(--panel-shadow);">
+                <div style="font-family:'Outfit','Plus Jakarta Sans',sans-serif; font-size:16.5px; font-weight:800; color:var(--text); margin-bottom:14px; display:flex; align-items:center; gap:10px;">
+                    <span style="background:var(--accent-grad); width:5px; height:20px; border-radius:99px;"></span>
                     {html.escape(heading)}
                 </div>
                 <div style="display:flex; flex-wrap:wrap; gap:10px; padding-left:15px;">'''
@@ -485,32 +490,30 @@ async def single_post_display(req):
     ss_html = ""
     for ss in post.get("screenshots", []):
         s_src = html.escape(post_image_src(ss), quote=True)
-        ss_html += f'<div style="border:1px solid var(--border); border-radius:8px; overflow:hidden; aspect-ratio:16/9; background:var(--bg3); box-shadow:0 4px 15px rgba(0,0,0,0.2);"><img src="{s_src}" style="width:100%; height:100%; object-fit:cover; cursor:pointer; transition:0.3s;" onmouseover="this.style.transform=\'scale(1.03)\'" onmouseout="this.style.transform=\'scale(1)\'" onclick="window.open(this.src, \'_blank\')"></div>'
+        ss_html += f'<div style="border:1px solid var(--border); border-radius:12px; overflow:hidden; aspect-ratio:16/9; background:var(--bg3); box-shadow:0 8px 24px rgba(2,6,23,0.28);"><img src="{s_src}" style="width:100%; height:100%; object-fit:cover; cursor:pointer; transition:0.3s;" onmouseover="this.style.transform=\'scale(1.04)\'" onmouseout="this.style.transform=\'scale(1)\'" onclick="window.open(this.src, \'_blank\')"></div>'
     
-    # 📸 Screenshots Grid (No Box)
     gallery_section = f'''
-    <h3 style="font-size:20px; font-weight:800; color:var(--text); border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:20px; margin-top:40px; display:flex; align-items:center; gap:10px;">📸 Screenshots</h3>
+    <h3 style="font-size:20px; font-weight:800; color:var(--text); border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:20px; margin-top:40px; display:flex; align-items:center; gap:10px;">📸 Stills &amp; Screenshots</h3>
     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:20px;">{ss_html}</div>
     ''' if ss_html else ""
 
     admin_actions = f'''
-    <div style="margin-top:30px; padding:20px; border:1px dashed rgba(160,8,8,0.5); border-radius:12px; display:flex; gap:10px; background:var(--bg2);">
-        <a href="/admin/edit_post/{str(post['_id'])}" style="background:var(--bg3); border:1px solid var(--border); color:var(--text); padding:12px 24px; border-radius:8px; font-weight:800; text-decoration:none; font-size:14px; transition:0.2s;">✏️ Edit Post</a>
-        <button onclick="if(confirm('Are you sure you want to delete this post?')) {{ fetch('/api/post/delete', {{method:'POST', body:JSON.stringify({{post_id:'{str(post['_id'])}'}})}}).then(r=>r.json()).then(d=>{{ if(d.success) window.location.href='/posts'; else alert('Failed to delete'); }}) }}" style="background:rgba(160,8,8,0.8); border:none; color:#fff; padding:12px 24px; border-radius:8px; font-weight:800; cursor:pointer; font-size:14px; transition:0.2s;">🗑️ Delete</button>
+    <div style="margin-top:30px; padding:20px; border:1px dashed var(--border); border-radius:16px; display:flex; gap:12px; flex-wrap:wrap; background:var(--card);">
+        <a href="/admin/edit_post/{str(post['_id'])}" style="background:var(--bg3); border:1px solid var(--border); color:var(--text); padding:12px 24px; border-radius:10px; font-weight:800; text-decoration:none; font-size:14px; transition:0.2s;">✏️ Edit Post</a>
+        <button onclick="if(confirm('Are you sure you want to delete this post?')) {{ fetch('/api/post/delete', {{method:'POST', body:JSON.stringify({{post_id:'{str(post['_id'])}'}})}}).then(r=>r.json()).then(d=>{{ if(d.success) window.location.href='/posts'; else alert('Failed to delete'); }}) }}" style="background:rgba(244,63,94,0.88); border:none; color:#fff; padding:12px 24px; border-radius:10px; font-weight:800; cursor:pointer; font-size:14px; transition:0.2s;">🗑️ Delete Post</button>
     </div>
     ''' if role == 'admin' else ""
 
     page_body = f'''
     <style>
-        .ep-btn {{ background:var(--bg); border:1px solid var(--accent); color:var(--accent); font-family:inherit; font-weight:800; font-size:13px; text-decoration:none; padding:10px 20px; border-radius:6px; transition:0.2s; box-shadow:0 4px 10px rgba(0,0,0,0.2); display:inline-block; cursor:pointer; }}
-        .ep-btn:hover {{ background:var(--accent); color:#fff; transform:translateY(-2px); }}
-        .ep-btn:active {{ background:#fff !important; color:var(--accent) !important; border-color:#fff !important; transform:scale(0.92); transition:0s; }}
+        .ep-btn {{ background:var(--bg3); border:1px solid var(--accent-cyan); color:var(--accent-cyan); font-family:inherit; font-weight:800; font-size:13px; text-decoration:none; padding:10px 20px; border-radius:10px; transition:0.2s; box-shadow:0 4px 12px rgba(2,6,23,0.2); display:inline-block; cursor:pointer; }}
+        .ep-btn:hover {{ background:var(--accent-grad); color:#fff; border-color:transparent; transform:translateY(-2px); box-shadow:0 8px 20px var(--accent-glow); }}
+        .ep-btn:active {{ transform:scale(0.95); transition:0s; }}
         
-        /* 🔥 Hero Section Flexbox Layout */
         .hero-section {{ display:flex; flex-wrap:wrap; gap:30px; margin-bottom:35px; align-items:flex-start; }}
-        .hero-poster {{ flex:1 1 250px; max-width:320px; margin:0 auto; width:100%; aspect-ratio:3/4; overflow:hidden; border-radius:12px; box-shadow:0 12px 35px rgba(0,0,0,0.4); border:1px solid var(--border); }}
+        .hero-poster {{ flex:1 1 250px; max-width:320px; margin:0 auto; width:100%; aspect-ratio:3/4; overflow:hidden; border-radius:16px; box-shadow:0 16px 40px rgba(2,6,23,0.45); border:1px solid var(--border); }}
         .hero-poster img {{ width:100%; height:100%; object-fit:cover; }}
-        .hero-details {{ flex:2 1 400px; background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:30px; box-shadow:0 4px 15px rgba(0,0,0,0.1); }}
+        .hero-details {{ flex:2 1 400px; background:linear-gradient(125deg,rgba(99,102,241,0.12),rgba(6,182,212,0.05) 55%,transparent),var(--card); border:1px solid var(--border); border-radius:18px; padding:30px; box-shadow:var(--panel-shadow); }}
         
         @media(max-width:768px) {{
             .hero-poster {{ max-width:280px; }}
@@ -520,8 +523,8 @@ async def single_post_display(req):
 
     <div class="main" style="max-width:950px; margin:30px auto; padding:0 20px;">
         <div style="display:flex; align-items:center; gap:15px; margin-bottom:25px;">
-            <a href="/posts" style="background:var(--bg3); color:var(--text); text-decoration:none; padding:8px 16px; border-radius:6px; font-weight:700; font-size:13px; border:1px solid var(--border); transition:0.2s;">← Catalog</a>
-            <h2 style="font-size:22px; font-weight:800; color:var(--text); margin:0;">View Post</h2>
+            <a href="/posts" style="background:var(--bg3); color:var(--text); text-decoration:none; padding:9px 16px; border-radius:10px; font-weight:700; font-size:13px; border:1px solid var(--border); transition:0.2s;">← Back to Posts</a>
+            <span class="hub-kicker" style="margin:0;">🎬 RdxTv Feature</span>
         </div>
         
         <div class="hero-section">
@@ -531,14 +534,14 @@ async def single_post_display(req):
             <div class="hero-details">
                 <h1 style="font-size:32px; font-weight:900; color:var(--text); margin:0;">{html.escape(post.get("title", ""))}</h1>
                 {tags_div}
-                <div style="font-size:15px; color:var(--muted); line-height:1.7; margin-top:10px; white-space:pre-line; font-weight:500;">
+                <div style="font-size:15px; color:var(--muted); line-height:1.75; margin-top:12px; white-space:pre-line; font-weight:500;">
                     {html.escape(post.get("description", ""))}
                 </div>
             </div>
         </div>
 
         <div style="margin-bottom:25px;">
-            <h3 style="font-size:20px; font-weight:800; color:var(--text); border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:25px; display:flex; align-items:center; gap:10px;">🍿 Episodes / Download Links</h3>
+            <h3 style="font-size:20px; font-weight:800; color:var(--text); border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:25px; display:flex; align-items:center; gap:10px;">🍿 Stream &amp; Download Episodes</h3>
             {video_buttons}
         </div>
         
@@ -547,4 +550,4 @@ async def single_post_display(req):
 
     </div>
     '''
-    return build_page(f"{post.get('title', 'Post')} - Catalog", page_body, "", "posts", role)
+    return build_page(f"{post.get('title', 'Post')} - RdxTv", page_body, "", "posts", role)

@@ -89,7 +89,7 @@ async def get_spell_suggestions(query, limit=5):
 # ─────────────────────────────────────────────
 def get_filter_ui(search, files, total, act_src, offset, chat_id, req_id, key, next_off, simple_mode=True, delay=300):
     list_items = [
-        f"📁 <a href='https://t.me/{temp.U_NAME}?start=file_{chat_id}_{f['_id']}'>[{get_size(f['file_size'])}] {f['file_name']}</a>"
+        f"🎞️ <a href='https://t.me/{temp.U_NAME}?start=file_{chat_id}_{f['_id']}'>[{get_size(f['file_size'])}] {f['file_name']}</a>"
         for f in files
     ]
     files_text = "\n\n".join(list_items)
@@ -99,9 +99,9 @@ def get_filter_ui(search, files, total, act_src, offset, chat_id, req_id, key, n
     
     delay_min = max(1, round(delay / 60))
     
-    header_bq = (f"<blockquote>🎬 <b>Total:</b> {total}\n📚 <b>Source:</b> {act_src.upper()}\n"
-                 f"📄 <b>Page:</b> {curr_page}/{total_pages}</blockquote>")
-    footer_bq = f"<blockquote>⚠️ This message will delete in {delay_min}m.</blockquote>"
+    header_bq = (f"<blockquote>⚡ <b>RdxTv Vault</b>  │  🎬 <b>Results:</b> {total}\n"
+                 f"🗂️ <b>Source:</b> {act_src.upper()}  │  📄 <b>Page:</b> {curr_page}/{total_pages}</blockquote>")
+    footer_bq = f"<blockquote>⏳ Auto-clears in {delay_min}m to keep chat clean.</blockquote>"
     
     cap = f"{header_bq}\n\n{files_text}\n\n{footer_bq}"
 

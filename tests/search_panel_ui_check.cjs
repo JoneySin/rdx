@@ -11,7 +11,7 @@ const assert=require('node:assert/strict');
  await page.goto(base+'/dashboard');await page.locator('#results .grp-card').first().waitFor();
  const panel=page.locator('.home-search-panel');
  const appearance=()=>panel.evaluate(el=>{const s=getComputedStyle(el);return [s.backgroundColor,s.borderColor,s.borderWidth,s.borderRadius,s.boxShadow];});
- const dark=await appearance();assert.equal(dark[2],'1px');assert.equal(dark[3],'12px');
+ const dark=await appearance();assert.equal(dark[2],'1px');assert.equal(dark[3],'16px');
  for(const width of [320,390,767,768,1024,1440,1920]){
    await page.setViewportSize({width,height:800});
    const bounds=await panel.boundingBox();assert.ok(bounds.x>=0&&bounds.x+bounds.width<=width);
@@ -83,7 +83,7 @@ const assert=require('node:assert/strict');
    const homeWrap=await styles(page.locator('#cddColWrap'));
    const homeMenu=await styles(page.locator('#cddColMenu'));
    const homeItem=await styles(page.locator('#cddColMenu [data-val=cloud]'));
-   assert.equal(homeWrap[4],'8px');
+   assert.equal(homeWrap[4],'10px');
    for(const [path,menu] of [['/posts','#post_cat_menu'],['/actors','#dir_cat_menu']]){
      await page.goto(base+path);await page.evaluate(t=>document.documentElement.classList.toggle('light',t==='light'),theme);
      await page.mouse.move(0,0);await page.waitForTimeout(300);

@@ -21,12 +21,12 @@ _STATS_CSS = """<style>
 .stats-refresh:hover{border-color:var(--accent);background:var(--stat-soft)}.stats-refresh svg,.stat-icon svg,.section-icon svg,.cache-btn svg{width:16px;height:16px;display:block;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .stats-page a:focus-visible,.stats-page button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 .overview-panel{position:relative;overflow:hidden;display:grid;grid-template-columns:1.1fr 1fr;gap:32px;border:1px solid var(--stat-border);border-radius:18px;background:linear-gradient(125deg,var(--stat-surface),var(--bg2));padding:29px 32px;margin-bottom:30px}
-.overview-panel:before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--accent)}
+.overview-panel:before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--accent-grad)}
 .overview-main{min-width:0}.overview-label{color:var(--stat-muted);font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase}
 .overview-value{font-size:clamp(44px,5vw,64px);font-weight:900;letter-spacing:-2.5px;line-height:1.05;margin:13px 0 8px;color:var(--stat-text);font-variant-numeric:tabular-nums}
 .overview-note{font-size:12px;line-height:1.5;color:var(--stat-muted)}.overview-side{border-left:1px solid var(--stat-border);padding-left:32px;display:flex;flex-direction:column;justify-content:center;min-width:0}
 .overview-side-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}.overview-side-head strong{font-size:13px;color:var(--stat-text)}.overview-side-head span{font-size:11px;color:var(--stat-muted)}
-.distribution-bar,.meter{display:flex;width:100%;height:8px;overflow:hidden;border-radius:99px;background:var(--bg4)}.distribution-bar span{height:100%}.dist-primary{background:#e62c3c}.dist-cloud{background:#4b9cf6}.dist-archive{background:#a77af1}
+.distribution-bar,.meter{display:flex;width:100%;height:8px;overflow:hidden;border-radius:99px;background:var(--bg4)}.distribution-bar span{height:100%}.dist-primary{background:#6366f1}.dist-cloud{background:#06b6d4}.dist-archive{background:#a855f7}
 .distribution-legend{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:15px}.legend-item{min-width:0}.legend-label{display:flex;align-items:center;gap:6px;color:var(--stat-muted);font-size:11px}.legend-dot{width:7px;height:7px;border-radius:50%;flex:none}.legend-value{font-size:14px;font-weight:800;color:var(--stat-text);margin-top:5px;font-variant-numeric:tabular-nums}
 .section-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin:0 0 15px}.section-heading h2{font-size:19px;letter-spacing:-.45px;margin:6px 0 0;color:var(--stat-text)}.section-heading p{font-size:12px;color:var(--stat-muted);line-height:1.5}
 .collection-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:31px}.stats-card{background:var(--stat-surface);border:1px solid var(--stat-border);border-radius:14px;padding:20px;min-width:0;transition:border-color .2s,transform .2s}
@@ -205,7 +205,7 @@ async def stats(req):
     post_other_markup = _breakdown('Other / Uncategorized', post_other, True) if post_other > 0 else ''
     body = f'''{_STATS_CSS}<main class="stats-page">
   <header class="stats-head">
-    <div><div class="stats-eyebrow">Admin workspace</div><h1>Database overview</h1><p>Your library, content and account activity, all in one place.</p></div>
+    <div><div class="stats-eyebrow" style="color:var(--accent-cyan);">🛰️ RdxTv Telemetry</div><h1>Database overview</h1><p>Your RdxTv vaults, curated content, and subscriber activity in one live console.</p></div>
     <a href="/stats" class="stats-refresh">{_icon('refresh')} Refresh</a>
   </header>
 
@@ -257,4 +257,4 @@ async def stats(req):
   </section>
   <p class="stats-footnote">File and thumbnail counts may be cached for up to a minute. Group counts are read from saved records; legacy records are included.</p>
 </main>{_STATS_JS}'''
-    return build_page("Stats - Fast Finder", body, "", "stats", role)
+    return build_page("Stats - RdxTv", body, "", "stats", role)
