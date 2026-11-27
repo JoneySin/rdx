@@ -88,28 +88,14 @@ class script(object):
 
     ADMIN_COMMAND_TXT = """<blockquote><b>👑 <u>RdxTv Admin Console</u></b></blockquote>
 
+• /start - Launch Admin Hub &amp; Mini App
 • /stats - Live database &amp; vault telemetry
+• /link - Direct Watch &amp; Download link (reply to media)
+• /id - Inspect User, Chat &amp; Media ID
 • /delete - Move file to Recycle Bin
 • /delete_all - Clear vault collection
-• /web_users - RdxTv Web Portal accounts
-{repair_command}• /restart - Restart RdxTv engine
 • /sendAll on|off - Toggle Send All group buttons
-• /users - Export users.txt backup
-• /chats - Export chats.txt backup
-
-<blockquote><b>🛠️ <u>Vault &amp; Chat Maintenance</u></b></blockquote>
-
-• /leave &lt;chat_id&gt; - Disconnect from a chat
-• /invite_link &lt;chat_id&gt; - Generate invite link
-• /ban_grp | /unban_grp &lt;id&gt; [reason] - Moderate group access
-• /ban_user | /unban_user &lt;id&gt; [reason] - Moderate user access
-• /check_db - Primary → Cloud vault migration check
-• /cancel - Cancel a running /check_db
-
-<blockquote><b>⚙️ <u>Group Controls</u></b></blockquote>
-
-• /search - Auto Filter search
-• /settings - Group filter settings
+{repair_command}• /restart - Restart RdxTv engine
 • /button_style - Inline result button style""".replace(
         "{repair_command}",
         "• /repair_library - Refresh thumbnails &amp; migrate metadata (temporary)\n"
