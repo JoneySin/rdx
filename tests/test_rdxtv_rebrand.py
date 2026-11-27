@@ -49,8 +49,9 @@ class RdxTvRebrandTests(unittest.TestCase):
         self.assertNotIn("#e50914", CSS.lower())
         self.assertNotIn("nflxext.com", CSS.lower())
 
-        guest_html = build_page("Sign In - RdxTv", form_wrapper("Welcome Back", "<form></form>"), "login-bg").text
-        self.assertIn("RdxTv Portal", guest_html)
+        guest_html = build_page("Sign In - RdxTv", form_wrapper("Sign In", "<form></form>"), "login-bg").text
+        self.assertIn("<h2>Sign In</h2>", guest_html)
+        self.assertNotIn("hub-banner", guest_html)
         self.assertIn('aria-label="RdxTv home"', guest_html)
 
     def test_miniapp_template_uses_rdxtv_brand_and_theme(self):

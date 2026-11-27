@@ -283,12 +283,9 @@ def _page_body():
         DIRECTORY_FILTER_CSS
         + _CSS
         + '<main class="rb-page">'
-        '<header class="rb-head"><div><div class="rb-eyebrow">Admin workspace</div>'
-        '<h1 class="rb-title">Recycle Bin</h1>'
-        '<p class="rb-sub">Deleted media records are kept here for admin restore. '
-        'They are hidden from bot searches, the web catalogue and the mini app.</p></div>'
+        '<header class="rb-head"><h1 class="rb-title">Recycle Bin</h1>'
         '<div class="rb-headside"><span class="rb-count" id="rbCount">Loading…</span>'
-        '<a class="rb-back" href="/dashboard">← Back to library</a></div></header>'
+        '<a class="rb-back" href="/dashboard">← Back</a></div></header>'
         '<div class="rb-toolbar"><input class="rb-search" id="rbSearch" type="search" '
         'placeholder="Search deleted file names…" autocomplete="off" aria-label="Search deleted files"></div>'
         '<div class="rb-filters">'

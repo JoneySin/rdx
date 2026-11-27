@@ -119,7 +119,7 @@ body{
     radial-gradient(ellipse 75% 45% at 12% -8%,rgba(79,70,229,.09),transparent 65%),
     radial-gradient(ellipse 65% 40% at 88% -5%,rgba(2,132,199,.08),transparent 62%);
 }
-h1,h2,h3,.hub-banner-title{font-family:'Outfit','Plus Jakarta Sans',sans-serif}
+h1,h2,h3{font-family:'Outfit','Plus Jakarta Sans',sans-serif}
 
 /* ── Topbar & Desktop Quick-Nav ── */
 .topbar{
@@ -170,18 +170,12 @@ h1,h2,h3,.hub-banner-title{font-family:'Outfit','Plus Jakarta Sans',sans-serif}
 .sb-logout{display:flex;align-items:center;justify-content:center;gap:8px;padding:11px;border-radius:12px;text-align:center;text-decoration:none;color:var(--text);font-weight:700;font-size:13.5px;background:var(--bg3);border:1px solid var(--border);transition:.18s}
 .sb-logout:hover{border-color:#f43f5e;color:#fb7185;background:rgba(244,63,94,.08)}
 
-/* ── Shared Containers & Hub Banners ── */
-.main{padding:0 4% 44px;max-width:1400px;margin:0 auto}
-.search-box{background:var(--card);border:1px solid var(--border);padding:18px;border-radius:16px;margin-bottom:25px;box-shadow:var(--panel-shadow)}
-.hub-banner{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:22px 0 16px}
-.hub-kicker{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent-cyan);background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.26);padding:4px 10px;border-radius:999px;margin-bottom:6px}
-.hub-banner-title{font-size:clamp(22px,2.8vw,30px);font-weight:800;letter-spacing:-.4px;color:var(--text);line-height:1.2}
-.hub-banner-sub{font-size:13px;color:var(--muted);margin-top:3px}
-.hub-action-btn{display:inline-flex;align-items:center;gap:7px;background:var(--accent-grad);color:#fff;padding:10px 18px;border-radius:12px;text-decoration:none;font-weight:800;font-size:13px;box-shadow:0 8px 22px var(--accent-glow);transition:transform .18s,filter .18s}
-.hub-action-btn:hover{transform:translateY(-2px);filter:brightness(1.08)}
+/* ── Shared App Containers ── */
+.main{padding:18px 4% 44px;max-width:1400px;margin:0 auto}
+.search-box{background:var(--card);border:1px solid var(--border);padding:16px;border-radius:16px;margin-bottom:20px;box-shadow:var(--panel-shadow)}
 
 /* ── Legacy Stat Utilities ── */
-.search-zone{padding:20px 4%;background:transparent}
+.search-zone{padding:16px 4% 0;background:transparent}
 .search-row{display:flex;gap:10px;flex-wrap:wrap}
 .search-wrap{flex:1;position:relative;min-width:200px}
 .s-icon{position:absolute;left:15px;top:50%;transform:translateY(-50%);color:var(--muted)}
@@ -781,17 +775,17 @@ _ADMIN_MODALS = """
     <div class="edit-modal" id="editCombinedModal" role="dialog" aria-modal="true" aria-labelledby="fileEditorTitle" onclick="if(event.target===this)closeCombinedModal()">
         <div class="em-card file-editor">
             <button class="em-close" type="button" aria-label="Close file editor" onclick="closeCombinedModal()">&#10005;</button>
-            <header class="file-editor-head"><div class="file-editor-kicker">RdxTv Vault / Studio Editor</div><h2 class="em-title" id="fileEditorTitle">Edit file</h2><p>Update the details and artwork for this file.</p></header>
+            <header class="file-editor-head"><h2 class="em-title" id="fileEditorTitle">Edit file</h2></header>
             <div class="file-editor-content">
                 <section class="file-editor-section" aria-labelledby="fileDetailsTitle">
-                    <div class="file-editor-section-head"><span class="file-editor-number">01</span><div><h3 id="fileDetailsTitle">File details</h3><p>Make this file easier to find and organize.</p></div></div>
+                    <div class="file-editor-section-head"><span class="file-editor-number">01</span><div><h3 id="fileDetailsTitle">File details</h3></div></div>
                     <label class="file-editor-field" for="emName">File name<input type="text" id="emName" class="em-input" autocomplete="off"></label>
                     <label class="file-editor-field" for="emAddCaption">Search tags <span style="color:var(--muted);font-weight:400">(optional)</span><input type="text" id="emAddCaption" class="em-input" placeholder="e.g. actor, 1080p, comedy"><small>Saved as the file caption and used for search.</small></label>
                     <label class="file-editor-field" for="emQuality">Quality <span style="color:var(--muted);font-weight:400">(optional override)</span><input type="text" id="emQuality" class="em-input" maxlength="40" placeholder="e.g. 720p, 1080p, 4K"><small id="emQualityHelp">Leave blank to use detected quality.</small></label>
                     <label class="file-editor-field" for="emMoveCol">Collection<select id="emMoveCol" class="em-input"><option value="primary">🟢 Primary</option><option value="cloud">🔵 Cloud</option><option value="archive">🟠 Archive</option></select><small>Choose where this file belongs.</small></label>
                 </section>
                 <section class="file-editor-section" aria-labelledby="fileArtworkTitle">
-                    <div class="file-editor-section-head"><span class="file-editor-number">02</span><div><h3 id="fileArtworkTitle">Thumbnail</h3><p>Use an image that represents this file.</p></div></div>
+                    <div class="file-editor-section-head"><span class="file-editor-number">02</span><div><h3 id="fileArtworkTitle">Thumbnail</h3></div></div>
                     <div class="file-editor-art"><div class="thumb-preview-box" id="emPreviewBox"></div><div class="cropper-container-box" id="cropContainer"></div>
                     <label class="em-upload-btn">Choose image<input type="file" id="emFile" accept="image/*" onchange="handleLocalPreview(this)"></label><p class="file-editor-help" id="emImageHelp">Optional · Choose a new image and adjust its crop.</p></div>
                 </section>
@@ -815,7 +809,7 @@ _NAV_SHELL = ('<div class="sidebar-overlay" id="sbOverlay" onclick="closeSidebar
     '<div class="sidebar" id="sidebar"><div class="sb-header"><div class="sb-logo">'
     + BRAND_MARKUP + '</div>'
     '<button class="sb-close" onclick="closeSidebar()">&#10005;</button></div>'
-    '<nav class="sb-nav"><div class="sb-section">RdxTv Navigation</div>{links}</nav>'
+    '<nav class="sb-nav">{links}</nav>'
     '<div class="sb-footer"><a href="/logout" class="sb-logout"><span aria-hidden="true">🚪</span> Sign Out</a></div></div>'
     '<div class="topbar"><button class="ham-btn" id="hamBtn" onclick="openSidebar()">'
     '<span class="ham-line"></span><span class="ham-line"></span><span class="ham-line"></span></button>'
@@ -858,4 +852,4 @@ def build_page(title, body, cls="", active_tab="", role=None):
 def form_wrapper(title, content, err="", msg=""):
     e = f'<div class="err-box">{html.escape(str(err))}</div>' if err else ""
     m = f'<div class="success-box">{html.escape(str(msg))}</div>' if msg else ""
-    return f'<div class="login-wrap"><div class="login-card"><div class="auth-kicker">⚡ RdxTv Portal</div><h2>{html.escape(str(title))}</h2>{e}{m}{content}</div></div>'
+    return f'<div class="login-wrap"><div class="login-card"><h2>{html.escape(str(title))}</h2>{e}{m}{content}</div></div>'

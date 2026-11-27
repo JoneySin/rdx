@@ -168,30 +168,30 @@ def build_post_editor(post=None, post_id="", err="", msg=""):
     screenshots = '\n'.join(str(s) for s in (post.get('screenshots') or []))
     tags = ', '.join(str(t) for t in (post.get('tags') or []))
     return POST_EDITOR_CSS + f'''
-    <main class="post-studio"><header class="post-studio-header"><a class="post-back" href="{esc(back)}">← Back</a><div><div class="post-kicker">Content studio</div><h1>{heading}</h1><p>Organize the details, artwork and videos your audience will see.</p></div></header>
+    <main class="post-studio"><header class="post-studio-header"><a class="post-back" href="{esc(back)}">← Back</a><div><h1>{heading}</h1></div></header>
     {notices}<div id="postEditorError" class="err-box" role="alert" hidden></div><form id="postEditorForm" action="{action}" method="post" enctype="multipart/form-data">{hidden}
     <div class="post-form-layout"><div>
-      <section class="post-section"><div class="post-section-heading"><span class="post-step">01</span><div><div class="post-section-kicker">The basics</div><h2>Post details</h2><p>Make this post easy to discover.</p></div></div><div class="post-fields">
+      <section class="post-section"><div class="post-section-heading"><span class="post-step">01</span><div><h2>Post details</h2></div></div><div class="post-fields">
         <label class="post-field">Title<input class="post-input" name="title" value="{esc(post.get('title'))}" placeholder="e.g. Series name, season 1" required></label>
         <label class="post-field">Category<select class="post-input" name="category" required>{options}</select></label>
         <label class="post-field full">Description<textarea class="post-input" name="description" placeholder="Write a short description..." required>{esc(post.get('description'))}</textarea></label>
         <label class="post-field full">Search tags<input class="post-input" name="tags" value="{esc(tags)}" placeholder="e.g. Action, Drama, 2026"><span class="post-hint">Separate tags with commas.</span></label>
       </div></section>
-      <section class="post-section"><div class="post-section-heading"><span class="post-step">02</span><div><div class="post-section-kicker">Artwork</div><h2>Cover image</h2><p>Add a direct link or choose a new image.</p></div></div>
+      <section class="post-section"><div class="post-section-heading"><span class="post-step">02</span><div><h2>Cover image</h2></div></div>
         <div class="post-cover-grid"><div class="post-cover-preview"><span>No preview</span><img id="postCoverPreview" alt="Cover preview"{preview_attr}></div><div class="post-fields" style="grid-template-columns:1fr">
         <label class="post-field">Image URL or stored image<input id="postCoverUrl" class="post-input" name="cover_url" value="{esc(cover)}" placeholder="https://..."></label>
         <label class="post-field">Or upload an image<input id="postCoverFile" class="post-input post-file" type="file" name="cover_file" accept="image/*"><span class="post-hint">An upload replaces the link above.</span></label></div></div>
       </section>
-      <section class="post-section"><div class="post-section-heading"><span class="post-step">03</span><div><div class="post-section-kicker">Visuals</div><h2>Screenshots</h2><p>Keep existing images, add links or upload more.</p></div></div><div class="post-fields">
+      <section class="post-section"><div class="post-section-heading"><span class="post-step">03</span><div><h2>Screenshots</h2></div></div><div class="post-fields">
         <label class="post-field full">Image URLs or stored images<textarea id="postScreenshotUrls" class="post-input" name="screenshot_urls" placeholder="One image link per line">{esc(screenshots)}</textarea><span class="post-hint">Remove a line or use × on a preview to remove an existing image.</span></label>
         <div class="post-field full"><div id="postScreenshotPreview" class="post-preview-list"></div></div>
         <label class="post-field full">Upload additional images<input class="post-input post-file" type="file" name="screenshot_files" accept="image/*" multiple></label>
       </div></section>
-      <section class="post-section"><div class="post-section-heading"><span class="post-step">04</span><div><div class="post-section-kicker">Playback</div><h2>Videos &amp; episodes</h2><p>Search your library, then name and order the buttons.</p></div></div>
+      <section class="post-section"><div class="post-section-heading"><span class="post-step">04</span><div><h2>Videos &amp; episodes</h2></div></div>
         <label class="post-field">Find a file<input id="videoSearchInput" class="post-input" type="search" autocomplete="off" placeholder="Search library files..."></label>
         <div id="videoSearchResults" class="post-search-results" hidden></div>
         <div class="post-video-head"><span>Selected media</span><span id="postVideoCount" class="post-video-count">0 selected</span></div>
         <div id="postVideoEmpty" class="post-video-empty">No files selected yet. Search above to add one.</div><div id="selectedVideosContainer" class="post-video-list">{video_html}</div>
       </section>
-    </div><aside class="post-summary"><h2>{'Update your post' if editing else 'Ready to publish?'}</h2><p>Review the details and artwork. Selected files will appear in the order shown.</p><hr><button id="postSubmit" class="post-submit" type="submit" data-label="{submit}">{submit}</button><a class="post-cancel" href="{esc(back)}">Cancel</a></aside></div>
+    </div><aside class="post-summary"><h2>{'Update post' if editing else 'Publish'}</h2><hr><button id="postSubmit" class="post-submit" type="submit" data-label="{submit}">{submit}</button><a class="post-cancel" href="{esc(back)}">Cancel</a></aside></div>
     </form></main>''' + POST_EDITOR_JS

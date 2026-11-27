@@ -82,7 +82,7 @@ async def profile_page(req):
     exp_txt = html.escape(str(exp_txt), quote=True)
     tg_id = html.escape(str(tg_id), quote=True)
 
-    b = f'''{_PROFILE_CSS}<div class="main" style="padding-top:26px; max-width:720px;"><div class="hub-banner" style="padding-top:0;"><div><div class="hub-kicker">⚙️ RdxTv Account</div><div class="hub-banner-title">Account &amp; Security Settings</div><div class="hub-banner-sub">Manage your linked email, password, and RdxTv VIP subscription status.</div></div></div><div class="scard">{err_h}{msg_h}<h2 style="margin-bottom:22px;">Profile Overview</h2>
+    b = f'''{_PROFILE_CSS}<div class="main" style="padding-top:20px; max-width:720px;"><div class="scard">{err_h}{msg_h}<h2 style="margin-bottom:18px;">Profile</h2>
     <div class="prof-status" style="border-left:4px solid {st_clr};"><div style="font-size:12px;color:var(--muted);margin-bottom:5px;">Membership Tier</div><div style="font-size:18px;font-weight:800;color:{st_clr};margin-bottom:8px;">{st_txt}</div><div style="font-size:12px;color:var(--muted);margin-bottom:2px;">Subscription expires:</div><div style="font-size:15px;font-weight:600;">{exp_txt}</div></div>
     <div class="prof-tab-bar"><button class="prof-tab active" data-tab="account">Account Info</button><button class="prof-tab" data-tab="security">Security</button></div>
     <form action="/api/update_profile" method="post">

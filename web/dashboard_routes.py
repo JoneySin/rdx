@@ -1001,13 +1001,6 @@ _SEL_NONE = ' selected' if DEFAULT_MEDIA_MODE == 'none' else ''
 # ─────────────────────────────────────────────────────────────────────────────
 SEARCH_ZONE = (
     '<div class="search-zone">'
-      '<div class="hub-banner">'
-        '<div>'
-          '<div class="hub-kicker">\u26a1 RdxTv Cloud Vault</div>'
-          '<div class="hub-banner-title">Explore Movies, Series &amp; Multi-Quality Packs</div>'
-          '<div class="hub-banner-sub">Instant search across Primary, Cloud, and Archive vaults with direct cinema playback.</div>'
-        '</div>'
-      '</div>'
       '<div class="search-box home-search-panel">'
         '<div class="search-row1">'
             '<div class="search-wrap" id="qWrap">'

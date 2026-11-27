@@ -130,15 +130,12 @@ __BRAND_CSS__
     </div>
 </header>
 <main class="hero-content">
-    <div class="hero-badge">⚡ Direct Cloud Cinema Engine</div>
-    <h1 class="hero-title">Unlimited Cinema,<br><span class="grad-txt">Reimagined on RdxTv.</span></h1>
-    <p class="hero-sub">Instant multi-vault search, high-bitrate byte streaming, and curated series collections — synced across Web &amp; Telegram.</p>
-    <div class="search-container">
+    <h1 class="hero-title">Stream Movies &amp; Series<br><span class="grad-txt">on RdxTv</span></h1>
+    <div class="search-container" style="margin-top:20px;">
         <input type="text" id="searchInput" class="search-input" placeholder="Search movies, web series, 4K UHD, anime..." autocomplete="off">
-        <button class="search-btn" onclick="startSearch()">Stream Now &rarr;</button>
+        <button class="search-btn" onclick="startSearch()">Search &rarr;</button>
     </div>
     <div class="quick-picks">
-        <div class="qp-title">Trending Vault Picks</div>
         <span class="tag" onclick="fillAndSearch('Action')">🔥 Action</span>
         <span class="tag" onclick="fillAndSearch('Web Series')">📺 Web Series</span>
         <span class="tag" onclick="fillAndSearch('Thriller')">🕵️ Thriller</span>
@@ -146,11 +143,6 @@ __BRAND_CSS__
         <span class="tag" onclick="fillAndSearch('4K')">💎 4K UHD</span>
         <span class="tag" onclick="fillAndSearch('Sci-Fi')">🚀 Sci-Fi</span>
     </div>
-    <section class="feature-strip" aria-label="RdxTv highlights">
-        <div class="feat-card"><div class="feat-icon">⚡</div><h3>Zero-Wait Byte Stream</h3><p>Direct range-request playback with smooth 10-second seek and adaptive Plyr controls.</p></div>
-        <div class="feat-card"><div class="feat-icon">🗂️</div><h3>Smart Quality &amp; Series</h3><p>Grouped multi-resolution packs and ordered season episodes in one unified hub.</p></div>
-        <div class="feat-card"><div class="feat-icon">📱</div><h3>Web + Mini App Sync</h3><p>Jump seamlessly between the RdxTv Web Portal and the native Telegram Mini App.</p></div>
-    </section>
 </main>
 <script>
 (function(){if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light')})();

@@ -38,13 +38,13 @@ PLAYER_UI = r'''
   <div class="inline-player-card">
     <div class="inline-player-head">
       <span class="inline-player-mark" aria-hidden="true">&#9654;</span>
-      <div class="inline-player-titlebox"><div class="inline-player-kicker">RdxTv Cinema · Now Playing</div><div id="inlinePlayerTitle" class="inline-player-title"></div></div>
+      <div class="inline-player-titlebox"><div id="inlinePlayerTitle" class="inline-player-title"></div></div>
       <button type="button" class="inline-player-close" aria-label="Close player" onclick="closeInlinePlayer()">&times;</button>
     </div>
     <div class="inline-player-screen"><video id="inlinePlayerVideo" controls playsinline preload="metadata"></video></div>
     <div id="inlinePlayerSwitcher" class="inline-player-switcher" aria-label="Other versions in this group" hidden></div>
     <div id="inlinePlayerStatus" class="inline-player-status" role="status" aria-live="polite"></div>
-    <div class="inline-player-actions"><span class="inline-player-note">Playback depends on your browser's supported formats.</span><a id="inlinePlayerDownload" class="inline-player-download" hidden>&#11015; Download file</a></div>
+    <div class="inline-player-actions"><a id="inlinePlayerDownload" class="inline-player-download" hidden>&#11015; Download</a></div>
   </div>
 </div>
 <script>

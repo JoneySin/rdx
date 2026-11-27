@@ -205,7 +205,7 @@ async def stats(req):
     post_other_markup = _breakdown('Other / Uncategorized', post_other, True) if post_other > 0 else ''
     body = f'''{_STATS_CSS}<main class="stats-page">
   <header class="stats-head">
-    <div><div class="stats-eyebrow" style="color:var(--accent-cyan);">🛰️ RdxTv Telemetry</div><h1>Database overview</h1><p>Your RdxTv vaults, curated content, and subscriber activity in one live console.</p></div>
+    <h1>Database overview</h1>
     <a href="/stats" class="stats-refresh">{_icon('refresh')} Refresh</a>
   </header>
 
@@ -217,32 +217,32 @@ async def stats(req):
     </div>
   </section>
 
-  <section aria-labelledby="collections-title"><div class="section-heading"><div><div class="section-kicker">01 / Library</div><h2 id="collections-title">File collections</h2></div><p>File and thumbnail records by source</p></div>
+  <section aria-labelledby="collections-title"><div class="section-heading"><h2 id="collections-title">File collections</h2></div>
     <div class="collection-grid">{_collection_card('Primary', p_tot, s.get('primary_thumb', 0), p_pct, 'dist-primary')}{_collection_card('Cloud', c_tot, s.get('cloud_thumb', 0), c_pct, 'dist-cloud')}{_collection_card('Archive', a_tot, s.get('archive_thumb', 0), a_pct, 'dist-archive')}</div>
   </section>
 
-  <section aria-labelledby="content-title"><div class="section-heading"><div><div class="section-kicker">02 / Content &amp; community</div><h2 id="content-title">At a glance</h2></div><p>A closer look at what you have saved</p></div>
+  <section aria-labelledby="content-title"><div class="section-heading"><h2 id="content-title">At a glance</h2></div>
     <div class="detail-grid">
       <article class="stats-card detail-card" id="saved-group-stats"><div class="card-top"><div class="card-title"><span class="section-icon">{_icon('groups')}</span><h3>Saved Groups · Total</h3></div><span class="card-badge">GROUPS</span></div>
-        <div class="detail-number" id="saved-group-total">{group_count_markup('total', 0)}</div><div class="detail-description">Saved group records, including legacy records</div>
+        <div class="detail-number" id="saved-group-total">{group_count_markup('total', 0)}</div>
         <div class="breakdown"><div class="breakdown-item"><div class="breakdown-label">Quality Groups</div><div class="breakdown-value" id="saved-quality-count">{group_count_markup('quality', 0)}</div></div><div class="breakdown-item"><div class="breakdown-label">Series Groups</div><div class="breakdown-value" id="saved-series-count">{group_count_markup('series', 0)}</div></div></div>
-        <div class="group-scan"><h4>Automatic grouping</h4><div class="detail-description">Scan Primary, Cloud and Archive for compatible files. Large libraries may take several minutes.</div>
+        <div class="group-scan"><h4>Automatic grouping</h4>
           <button class="cache-btn" id="group-rescan" type="button" disabled>Checking scan…</button><div class="cache-status" id="group-scan-status" role="status" aria-live="polite">Checking scan status…</div>
         </div>
       </article>
       <article class="stats-card detail-card"><div class="card-top"><div class="card-title"><span class="section-icon">{_icon('people')}</span><h3>System subscribers</h3></div><span class="card-badge">USERS</span></div>
-        <div class="detail-number">{users:,}</div><div class="detail-description">Total user records</div><div class="breakdown">{_breakdown('Logged in today', logged_in_today)}{_breakdown('Premium users', premium_users)}</div>
+        <div class="detail-number">{users:,}</div><div class="breakdown">{_breakdown('Logged in today', logged_in_today)}{_breakdown('Premium users', premium_users)}</div>
       </article>
       <article class="stats-card detail-card"><div class="card-top"><div class="card-title"><span class="section-icon">{_icon('directory')}</span><h3>Directory profiles</h3></div><span class="card-badge">DIRECTORY</span></div>
-        <div class="detail-number">{tot_dir:,}</div><div class="detail-description">Profiles across all categories</div><div class="breakdown">{_breakdown('Actors', act_dir)}{_breakdown('Apps', app_dir)}{_breakdown('Websites', web_dir, True)}</div>
+        <div class="detail-number">{tot_dir:,}</div><div class="breakdown">{_breakdown('Actors', act_dir)}{_breakdown('Apps', app_dir)}{_breakdown('Websites', web_dir, True)}</div>
       </article>
       <article class="stats-card detail-card"><div class="card-top"><div class="card-title"><span class="section-icon">{_icon('posts')}</span><h3>Content posts</h3></div><span class="card-badge">POSTS</span></div>
-        <div class="detail-number">{post_total:,}</div><div class="detail-description">Posts across all categories</div><div class="breakdown">{_breakdown('Movies', post_movies)}{_breakdown('Web Series', post_webseries)}{_breakdown('App Video', post_appvid)}{_breakdown('Porn', post_porn)}{post_other_markup}</div>
+        <div class="detail-number">{post_total:,}</div><div class="breakdown">{_breakdown('Movies', post_movies)}{_breakdown('Web Series', post_webseries)}{_breakdown('App Video', post_appvid)}{_breakdown('Porn', post_porn)}{post_other_markup}</div>
       </article>
     </div>
   </section>
 
-  <section aria-labelledby="tools-title"><div class="section-heading"><div><div class="section-kicker">03 / Database tools</div><h2 id="tools-title">Storage &amp; maintenance</h2></div><p>Monitor usage and manage cached data</p></div>
+  <section aria-labelledby="tools-title"><div class="section-heading"><h2 id="tools-title">Storage &amp; maintenance</h2></div>
     <div class="operations-grid">
       <article class="stats-card operation-card"><div class="card-top"><div class="card-title"><span class="section-icon">{_icon('storage')}</span><h3>Database storage</h3></div><span class="card-badge">MONGODB</span></div>
         <div class="detail-number" id="db-used-val" aria-live="polite">Loading…</div><div class="operation-line"><span>Used storage</span><strong id="db-pct-val">—</strong></div>
@@ -250,11 +250,9 @@ async def stats(req):
       </article>
       <article class="stats-card operation-card"><div class="card-top"><div class="card-title"><span class="section-icon">{_icon('image')}</span><h3>Cache &amp; activity</h3></div><span class="card-badge">MAINTENANCE</span></div>
         <div class="breakdown"><div class="breakdown-item"><div class="breakdown-label">Thumbnail records</div><div class="breakdown-value">{s.get('total_thumb', 0):,}</div></div><div class="breakdown-item"><div class="breakdown-label">Video stream plays</div><div class="breakdown-value">{total_plays:,}</div></div></div>
-        <div class="detail-description">Clear in-memory thumbnail and search caches when you need a fresh read.</div>
         <button class="cache-btn" id="flushBtn" type="button" onclick="triggerCacheFlush()">{_icon('refresh')} Clear RAM cache</button><div class="cache-status" id="flush-status" aria-live="polite"></div>
       </article>
     </div>
   </section>
-  <p class="stats-footnote">File and thumbnail counts may be cached for up to a minute. Group counts are read from saved records; legacy records are included.</p>
 </main>{_STATS_JS}'''
     return build_page("Stats - RdxTv", body, "", "stats", role)

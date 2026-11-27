@@ -20,18 +20,17 @@ async def login_user(req):
     if role:
         return web.HTTPFound('/dashboard')
     content = (
-        '<p class="auth-sub">Sign in to explore the RdxTv streaming vault, curated collections, and cinema hub.</p>'
         '<form action="/api/login" method="post">'
         '<input type="email" name="email" placeholder="Email Address" required>'
         '<input type="password" name="password" placeholder="Password" required>'
-        '<button class="submit-btn" type="submit">Sign In to RdxTv →</button>'
+        '<button class="submit-btn" type="submit">Sign In →</button>'
         '</form>'
         '<div class="auth-links">'
         '<a href="/forgot_password" class="auth-link-muted">Forgot Password?</a>'
         '<a href="/register" class="auth-link-strong">Create Account →</a>'
         '</div>'
     )
-    return build_page("Sign In - RdxTv", form_wrapper("Welcome Back", content, req.query.get('err',''), req.query.get('msg','')), "login-bg")
+    return build_page("Sign In - RdxTv", form_wrapper("Sign In", content, req.query.get('err',''), req.query.get('msg','')), "login-bg")
 
 @login_routes.post('/api/login')
 async def api_login_user(req):
@@ -60,7 +59,6 @@ async def api_login_user(req):
 @login_routes.get('/register')
 async def register_user(req):
     content = (
-        '<p class="auth-sub">Link your Telegram ID to unlock instant access to RdxTv Web.</p>'
         '<form action="/api/register_step1" method="post">'
         '<input type="number" name="tg_id" placeholder="Telegram ID (e.g. 123456)" required>'
         '<input type="email" name="email" placeholder="Email Address" required>'
@@ -68,11 +66,11 @@ async def register_user(req):
         '<button class="submit-btn" type="submit">Send OTP via Telegram</button>'
         '</form>'
         '<div class="auth-links" style="justify-content:center;gap:6px;">'
-        '<span style="color:var(--muted)">Already on RdxTv?</span>'
+        '<span style="color:var(--muted)">Already registered?</span>'
         '<a href="/login" class="auth-link-strong">Sign In</a>'
         '</div>'
     )
-    return build_page("Create Account - RdxTv", form_wrapper("Join RdxTv", content, req.query.get('err','')), "login-bg")
+    return build_page("Create Account - RdxTv", form_wrapper("Create Account", content, req.query.get('err','')), "login-bg")
 
 @login_routes.post('/api/register_step1')
 async def api_register_step1(req):
@@ -111,11 +109,10 @@ async def verify_registration_page(req):
     except (TypeError, ValueError):
         return web.HTTPFound('/register')
     content = (
-        '<p class="auth-sub">Enter the 6-digit verification code sent to your Telegram bot PM.</p>'
         f'<form action="/api/register_step2" method="post">'
         f'<input type="hidden" name="tg_id" value="{tg_id}">'
-        '<input type="text" name="otp" placeholder="Enter 6-digit OTP" required>'
-        '<button class="submit-btn" type="submit">Verify & Activate RdxTv</button>'
+        '<input type="text" name="otp" placeholder="Enter 6-digit Telegram OTP" required>'
+        '<button class="submit-btn" type="submit">Verify &amp; Activate</button>'
         '</form>'
     )
     return build_page("Verify Registration - RdxTv", form_wrapper("Verify OTP", content, req.query.get('err','')), "login-bg")
@@ -148,12 +145,11 @@ async def api_register_step2(req):
 @login_routes.get('/forgot_password')
 async def forgot_password(req):
     content = (
-        '<p class="auth-sub">Enter your Telegram ID to receive a 6-digit RdxTv recovery code.</p>'
         '<form action="/api/forgot_password" method="post">'
         '<input type="number" name="tg_id" placeholder="Telegram ID" required>'
-        '<button class="submit-btn" type="submit">Send Recovery OTP</button>'
+        '<button class="submit-btn" type="submit">Send OTP</button>'
         '</form>'
-        '<hr style="border:0; border-top:1px solid var(--border); margin:24px 0;">'
+        '<hr style="border:0; border-top:1px solid var(--border); margin:20px 0;">'
         '<form action="/api/reset_password" method="post">'
         '<input type="number" name="tg_id" placeholder="Confirm Telegram ID" required>'
         '<input type="text" name="otp" placeholder="Enter 6-digit OTP" required>'
@@ -164,7 +160,7 @@ async def forgot_password(req):
         '<a href="/login" class="auth-link-muted">← Back to Sign In</a>'
         '</div>'
     )
-    return build_page("Reset Password - RdxTv", form_wrapper("Account Recovery", content, req.query.get('err',''), req.query.get('msg','')), "login-bg")
+    return build_page("Reset Password - RdxTv", form_wrapper("Reset Password", content, req.query.get('err',''), req.query.get('msg','')), "login-bg")
 
 @login_routes.post('/api/forgot_password')
 async def api_forgot_password(req):

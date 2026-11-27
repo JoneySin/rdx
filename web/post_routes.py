@@ -250,13 +250,6 @@ async def posts_directory_page(req):
     
     search_ui = f'''
     {DIRECTORY_CSS}
-    <div class="hub-banner" style="padding-top:6px;">
-        <div>
-            <div class="hub-kicker">🎬 RdxTv Studio</div>
-            <div class="hub-banner-title">Curated Movies &amp; Web Series</div>
-            <div class="hub-banner-sub">Hand-crafted cinema posts with posters, screenshots, and multi-episode streaming links.</div>
-        </div>
-    </div>
     <div class="search-box">
         <div class="s-row-1" id="postSearchRow">
             <input type="text" id="post_q" class="s-input" placeholder="Search curated movies, web series, posts...">
@@ -521,10 +514,9 @@ async def single_post_display(req):
         }}
     </style>
 
-    <div class="main" style="max-width:950px; margin:30px auto; padding:0 20px;">
-        <div style="display:flex; align-items:center; gap:15px; margin-bottom:25px;">
-            <a href="/posts" style="background:var(--bg3); color:var(--text); text-decoration:none; padding:9px 16px; border-radius:10px; font-weight:700; font-size:13px; border:1px solid var(--border); transition:0.2s;">← Back to Posts</a>
-            <span class="hub-kicker" style="margin:0;">🎬 RdxTv Feature</span>
+    <div class="main" style="max-width:950px; margin:20px auto; padding:0 20px;">
+        <div style="display:flex; align-items:center; gap:15px; margin-bottom:18px;">
+            <a href="/posts" style="background:var(--bg3); color:var(--text); text-decoration:none; padding:8px 15px; border-radius:10px; font-weight:700; font-size:13px; border:1px solid var(--border); transition:0.2s;">← Back</a>
         </div>
         
         <div class="hero-section">

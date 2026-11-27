@@ -77,7 +77,6 @@ __BRAND_CSS__
 <div class="hero-container">
 <div class="player-box"><video id="player" playsinline controls><source src="{src}" type="{mime_type}"></video></div>
 <div class="info-section">
-<div class="stream-kicker">🎬 RdxTv Cinema Stream</div>
 <div class="title">{file_name}</div>
 <div class="controls-row">
 <a href="{src}" class="btn btn-download"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 16L7 11H10V4H14V11H17L12 16ZM5 20V18H19V20H5Z"/></svg>Download</a>
