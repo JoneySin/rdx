@@ -3,18 +3,9 @@ from pathlib import Path
 
 class script(object):
     
-    START_TXT = """<b>🎬 Hey {}, {}!</b>
+    START_TXT = """<b>Hey {}, {}!</b>
 
-<blockquote><b>⚡ Welcome to RdxTv — Next-Gen Cloud Cinema & Series Hub</b></blockquote>
-
-╭━━━〔 🌌 <b>RdxTv Core Experience</b> 〕━━━╮
-┃ 📱 <b>RdxTv Mini App</b> — Instant Vault Search
-┃ 🎥 <b>Cinema Player</b> — Smooth 10s Skip & Seek
-┃ 🌐 <b>Web Portal</b> — Curated Series, Posts & Cast
-┃ ⚡ <b>Direct Byte-Stream</b> — Zero-Wait HD Playback
-╰━━━━━━━━━━━━━━━━━━━━━━━━━━━╯
-
-<i>Tap <b>Launch RdxTv Hub</b> or send any Movie / Series title below to stream instantly! 🚀</i>"""
+Welcome to <b>RdxTv</b>. Send any movie or series name to search files."""
 
     STATUS_TXT = """<b>🛰️ RdxTv System Telemetry</b>
 
