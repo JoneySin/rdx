@@ -7,27 +7,32 @@ class script(object):
 
 Welcome to <b>RdxTv</b>. Send any movie or series name to search files."""
 
-    STATUS_TXT = """<b>🛰️ RdxTv System Telemetry</b>
+    STATUS_TXT = """🤖 <b>Fast Finder System Telemetry</b>
 
-╭━━━〔 👥 <b>Audience & Reach</b> 〕━━━╮
-┃ 👤 <b>Users:</b> <code>{}</code>  │  🏘️ <b>Groups:</b> <code>{}</code>
-┃ 💎 <b>VIP Members:</b> <code>{}</code>
-╰━━━━━━━━━━━━━━━━━━━━━━━━━━╯
+👥 <u><b>Network Dynamics:</b></u>
+<blockquote>🧑‍💼 <b>Users:</b> {}
+🏪 <b>Groups:</b> {}
+💎 <b>Premium:</b> {}</blockquote>
 
-╭━━━〔 🗄️ <b>RdxTv Media Vaults</b> 〕━━━╮
-┃ 📦 <b>Total Indexed:</b> <code>{}</code>
-┃ 🎬 <b>Primary Vault:</b> <code>{}</code> <i>(🖼️ {})</i>
-┃ ☁️ <b>Cloud Vault:</b> <code>{}</code> <i>(🖼️ {})</i>
-┃ 🗄️ <b>Archive Vault:</b> <code>{}</code> <i>(🖼️ {})</i>
-╰━━━━━━━━━━━━━━━━━━━━━━━━━━╯
+🗄 <u><b>Data Centre (Total: {}):</b></u>
+<blockquote>🟢 <b>Primary:</b> {} (🖼 {} )
+🔵 <b>Cloud:</b> {} (🖼 {})
+🟠 <b>Archive:</b> {} (🖼 {})</blockquote>
 
-╭━━━〔 🎭 <b>Directory & Studio</b> 〕━━━╮
-┃ 🌟 <b>Profiles:</b> <code>{}</code> <i>(🎭 {} │ 📱 {} │ 🌐 {})</i>
-┃ 🎞️ <b>Posts:</b> <code>{}</code> <i>(🎬 {} │ 📺 {} │ 📱 {} │ 🔞 {})</i>
-┃ 🖼️ <b>Total Posters:</b> <code>{}</code>
-╰━━━━━━━━━━━━━━━━━━━━━━━━━━╯
+📦 <u><b>Universal Directory (Total: {}):</b></u>
+<blockquote>🎭 <b>Actors:</b> {}
+📱 <b>Apps:</b> {}
+🌐 <b>Websites:</b> {}</blockquote>
 
-⏱️ <b>Engine Uptime:</b> <code>{}</code>"""
+📝 <u><b>Posts CMS (Total: {}):</b></u>
+<blockquote>🎬 <b>Movies:</b> {}
+📺 <b>Web Series:</b> {}
+📱 <b>App Video:</b> {}
+🔞 <b>Porn:</b> {}</blockquote>
+
+⚙️ <u><b>Engine Metrics:</b></u>
+<blockquote>🖼 <b>Global Thumbs:</b> {}
+⏱ <b>Uptime:</b> {}</blockquote>"""
 
     USER_STATUS_TXT = """<b>🌐 RdxTv Cloud Library</b>
 

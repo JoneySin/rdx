@@ -22,7 +22,7 @@ class RdxTvRebrandTests(unittest.TestCase):
         self.assertNotIn("Fast Finder", start_msg)
 
         status_msg = script.STATUS_TXT.format(*range(21))
-        self.assertIn("RdxTv", status_msg)
+        self.assertIn("Telemetry", status_msg)
 
         user_status_msg = script.USER_STATUS_TXT.format(*range(10))
         self.assertIn("RdxTv", user_status_msg)
