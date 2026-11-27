@@ -7,7 +7,7 @@ from datetime import datetime
 from pyrogram import enums
 from pyrogram.errors import FloodWait
 
-from info import ADMINS, IS_PREMIUM, TIME_ZONE
+from info import ADMINS, TIME_ZONE
 from database.users_chats_db import db, DEFAULT_PLAN_STATUS as RESET_PLAN_STATUS
 
 logger = logging.getLogger(__name__)
@@ -118,8 +118,6 @@ def get_local_now():
     return datetime.now(tz).replace(tzinfo=None)
 
 # ─────────────────────────────────────────────
-async def is_premium(user_id, bot=None):
-    return user_id in ADMINS
 
 # ❌ FIX: 'broadcast_messages' (पुराना भारी ब्रॉडकास्ट इंजन कबाड़) पूरी तरह डिलीटेड। 
 # इससे नो-रिपिटिशन रूल और क्लीन आर्किटेक्चर लागू होता है।

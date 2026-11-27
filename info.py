@@ -12,8 +12,6 @@ if _missing_env:
     logger.error("❌ Missing required environment variable(s): %s", ", ".join(_missing_env))
     exit(1)
 
-PAYMENT_ENV = ("UPI_ID", "UPI_NAME", "RECEIPT_SEND_USERNAME")
-
 # ─────────────────────────────────────────────
 # 🧠 HELPERS & BOOLEAN PARSERS (RAM Safe)
 # ─────────────────────────────────────────────
@@ -151,7 +149,6 @@ AUTO_DELETE = is_enabled("AUTO_DELETE", True)
 PROTECT_CONTENT = is_enabled("PROTECT_CONTENT", False)
 SPELL_CHECK = is_enabled("SPELL_CHECK", True)
 IS_STREAM = is_enabled("IS_STREAM", True)
-IS_PREMIUM = False
 # A full library scan is useful after bulk changes, but running it on every
 # restart can keep a small worker/DB busy for minutes and make normal replies
 # feel slow. Keep it opt-in; the admin dashboard can still trigger it manually.
@@ -194,11 +191,4 @@ else:
 # Space- or comma-separated Telegram reaction emojis; empty disables them.
 REACTIONS = parse_reactions()
 
-PRE_DAY_AMOUNT = int(environ.get("PRE_DAY_AMOUNT", 10))
-UPI_ID = environ.get("UPI_ID", "").strip()
-UPI_NAME = environ.get("UPI_NAME", "").strip()
-
-RECEIPT_SEND_USERNAME = environ.get("RECEIPT_SEND_USERNAME", "").strip()
-if RECEIPT_SEND_USERNAME and not RECEIPT_SEND_USERNAME.startswith("@") and not RECEIPT_SEND_USERNAME.isnumeric():
-    RECEIPT_SEND_USERNAME = "@" + RECEIPT_SEND_USERNAME
 

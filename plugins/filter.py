@@ -9,8 +9,8 @@ from pyrogram import Client, ContinuePropagation, filters, enums
 from pyrogram.types import LinkPreviewOptions
 from keyboards import ui_button, ui_keyboard
 
-from info import ADMINS, MAX_BOT_RESULTS, IS_PREMIUM, PICS, SPELL_CHECK, REACTIONS
-from utils import is_premium, get_size, is_check_admin, temp, get_settings, save_group_settings, react_to_message
+from info import ADMINS, MAX_BOT_RESULTS, PICS, SPELL_CHECK, REACTIONS
+from utils import get_size, is_check_admin, temp, get_settings, save_group_settings, react_to_message
 from database.ia_filterdb import get_search_results, get_db_spell_suggestions
 from database.users_chats_db import db
 from Script import script  
@@ -211,10 +211,7 @@ async def pm_search(client, message):
         raise ContinuePropagation
     uid = message.from_user.id
     
-    if uid not in ADMINS and not await is_premium(uid, client):
-        if hasattr(message, 'reply'):
-            return await message.reply("🔒 <b>Access Denied:</b> This bot is strictly <b>Admin-Only</b>. Only authorized Bot Admins can use this service.")
-        return
+
     
     settings = await get_settings(message.chat.id)
     await auto_filter(client, message, collection_type="all", settings=settings)
@@ -228,7 +225,7 @@ async def group_search(client, message):
     settings = await get_settings(chat_id)
     if not settings.get("search_enabled", True): return
     
-    if user_id not in ADMINS and not await is_premium(user_id, client): return
+
 
     text_lower = message.text.lower()
     
@@ -395,8 +392,7 @@ async def spell_check_handler(client, query):
             return await query.answer("❌ This suggestion has expired, please search again.", show_alert=True)
         suggestion = suggestions[int(idx)]
 
-        if IS_PREMIUM and query.from_user.id not in ADMINS and not await is_premium(query.from_user.id, client):
-            return await query.answer("❌ Admin access required!", show_alert=True)
+
         await query.answer("🔍 Searching...", show_alert=False)
         answered = True
         counts_out = {}
@@ -436,8 +432,7 @@ async def pagination_handler(client, query):
         if int(req) != query.from_user.id: return await query.answer("❌ Not for you!", show_alert=True)
     except: return await query.answer("❌ Error!", show_alert=True)
 
-    if IS_PREMIUM and query.from_user.id not in ADMINS and not await is_premium(query.from_user.id, client): 
-        return await query.answer("❌ Admin access required!", show_alert=True)
+
 
     entry = BUTTONS.get(key)
     if not entry: return await query.answer("❌ Search Expired!", show_alert=True)

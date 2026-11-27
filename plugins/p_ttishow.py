@@ -5,7 +5,7 @@ import logging
 import gc
 from pyrogram import Client, filters, enums
 from pyrogram.types import LinkPreviewOptions
-from info import ADMINS, LOG_CHANNEL, PICS, IS_PREMIUM
+from info import ADMINS, LOG_CHANNEL, PICS
 from database.users_chats_db import db
 
 from utils import temp, get_settings, is_rate_limited

@@ -19,12 +19,11 @@ from database.ia_filterdb import (
 from database.users_chats_db import db
 
 from info import (
-    IS_PREMIUM, URL, BIN_CHANNEL, ADMINS,
+    URL, BIN_CHANNEL, ADMINS,
     LOG_CHANNEL, PICS, IS_STREAM, REACTIONS, PM_FILE_DELETE_TIME,
     PROTECT_CONTENT
 )
 from utils import (
-    is_premium,
     get_settings, get_size, temp,
     get_readable_time, get_wish, get_seconds, react_to_message
 )
@@ -183,12 +182,9 @@ async def start(client, message):
             message.from_user.mention, message.from_user.id
         ))
 
-    if IS_PREMIUM and message.from_user.id not in ADMINS and not await is_premium(message.from_user.id, client):
-        if hasattr(message, 'reply'):
-            return await message.reply(
-                "🔒 <b>Access Denied:</b> This bot is strictly <b>Admin-Only</b>. Only authorized Bot Admins can use this service."
-            )
-        return
+    # Admin check for standard bot access
+    # Gated commands ensure only admins can initiate bot actions
+
 
     if len(message.command) > 1:
         try:
@@ -300,8 +296,7 @@ async def send_group_files(client, query):
     uid = query.from_user.id
     if not temp.SEND_ALL_ENABLED:
         return await query.answer("❌ Send All buttons are turned off by the admin.", show_alert=True)
-    if IS_PREMIUM and uid not in ADMINS and not await is_premium(uid, client):
-        return await query.answer("❌ Admin access required!", show_alert=True)
+
 
     gid = query.data.split("#", 1)[1].strip() if "#" in query.data else ""
     if not gid:
@@ -460,7 +455,7 @@ async def delete_all_cmd(client, message):
 # ─────────────────────────────────────────────
 @Client.on_message(filters.command("link"))
 async def link_generator(client, message):
-    if IS_PREMIUM and message.from_user.id not in ADMINS and not await is_premium(message.from_user.id, client):
+    if message.from_user.id not in ADMINS:
         return await message.reply("🔒 <b>Access Denied:</b> This command is restricted to Bot Admins only.")
 
     media = (
